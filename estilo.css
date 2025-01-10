@@ -1,0 +1,45 @@
+:root {
+    --gris_oscuro: rgb(56, 53, 53)
+}
+
+* {
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: grey;
+}
+
+#header {
+    text-align: end;
+}
+
+#principal {
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+#container1 {
+    width: 420px;
+    height: 290px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#container2 {
+    width: 500px;
+    height: 290px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.tiempo {
+    font-size: 2.5rem;
+}

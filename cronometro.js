@@ -1,0 +1,136 @@
+const TIMER = document.getElementById('timer')
+
+const BTN_START = document.getElementById('start')
+const BTN_STOP = document.getElementById('stop')
+const BTN_RESTART = document.getElementById('restart')
+BTN_STOP.disabled=true
+
+let hs
+let min
+let seg
+let interval = null
+
+segundos = 0
+
+function startTimer() {
+    const INTERVAL = parseInt(document.getElementById('interval').value)
+    const HOURS = parseInt(document.getElementById('hs').value)
+    const MINUTES = parseInt(document.getElementById('min').value)
+    const SECONDS = parseInt(document.getElementById('seg').value)
+    if (TIMER.textContent == `00:00:00`) {
+        hs = HOURS
+        min = MINUTES
+        seg = SECONDS
+    }
+    interval = setInterval(() => {
+        seg++
+        if(seg >= 60){
+            seg=0
+            min++
+            if(min >= 60){
+                min=0
+                hs++
+            }
+        }
+        if (hs > 0) {
+            losMinutos()
+            losSegundos()
+        } else {
+            losMinutos()
+            losSegundos()
+        }
+
+        function losMinutos() {
+            if (min > 59) {
+                hs++
+                min = 0
+            }
+            losSegundos()
+
+            if(hs <= 9){
+                if (min >= 0 && min < 10) {
+                    if (seg <= 9) {
+                        TIMER.textContent = `0${hs}:0${min}:0${seg}`
+                    } else {
+                        TIMER.textContent = `0${hs}:0${min}:${seg}`
+                    }
+                }
+    
+                if (min >= 10 && min < 60) {
+                    if (seg <= 9) {
+                        TIMER.textContent = `0${hs}:${min}:0${seg}`
+                    } else {
+                        TIMER.textContent = `0${hs}:${min}:${seg}`
+                    }
+                }
+            } else {
+                if (min >= 0 && min < 10) {
+                    if (seg <= 9) {
+                        TIMER.textContent = `${hs}:0${min}:0${seg}`
+                    } else {
+                        TIMER.textContent = `${hs}:0${min}:${seg}`
+                    }
+                }
+    
+                if (min >= 10 && min < 60) {
+                    if (seg <= 9) {
+                        TIMER.textContent = `${hs}:${min}:0${seg}`
+                    } else {
+                        TIMER.textContent = `${hs}:${min}:${seg}`
+                    }
+                }
+            }
+        }
+
+        function losSegundos() {
+            if (seg > 59) {
+                seg = 0
+                min++
+            }
+        }
+    }, INTERVAL)
+}
+
+BTN_START.addEventListener('click', () => {
+    if (BTN_START.disabled == false) {
+        BTN_START.disabled = true
+        BTN_STOP.disabled = false
+        if (seg == 0 && min == 0 && hs == 0) {
+            segundos++
+        }
+        startTimer()
+    } else {
+        BTN_START.disabled = false
+    }
+})
+
+BTN_STOP.addEventListener('click', () => {
+    if (BTN_START.disabled == true) {
+        BTN_START.disabled = false
+        BTN_STOP.disabled = true
+    }
+    clearInterval(interval)
+})
+
+BTN_RESTART.addEventListener('click', () => {
+    if (BTN_START.disabled == false && BTN_STOP.disabled == true) {
+        TIMER.textContent = `00:00:00`
+        hs = 0
+        min = 0
+        seg = 0
+        segundos = 0
+    } else {
+        BTN_RESTART.disabled = true
+        const CONTAINER = document.getElementById('container1')
+        const LABEL = document.createElement('label')
+        LABEL.textContent = 'Por favor deten el cronómetro con el boton detener, gracias!!!'
+        LABEL.setAttribute('id', 'wait')
+        LABEL.style.color = 'white'
+        CONTAINER.appendChild(LABEL)
+        function eliminarAviso() {
+            document.getElementById('wait').remove()
+            BTN_RESTART.disabled = false
+        }
+        setTimeout(eliminarAviso, 3000)
+    }
+})
