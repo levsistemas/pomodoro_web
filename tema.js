@@ -4,19 +4,26 @@ const SELECT = document.getElementById('select')
 const INPUT_BUTTON = document.querySelectorAll('input[type="button"]')
 const INPUT_NUMBER = document.querySelectorAll('input[type="number"]')
 const LABELS = document.querySelectorAll('#header label')
+const STADISTICS = document.getElementById('stadistics')
+const TASKS = document.getElementById('tasks')
 SELECT.addEventListener('change', (event) => {
     const SELECTED_COLOR = event.target.value
-    if(SELECT.value=='yellow' || SELECT.value=='white'){
+    if (SELECT.value == 'yellow' || SELECT.value == 'white') {
         PRINCIPAL.style.color = SELECTED_COLOR
+        STADISTICS.style.color = SELECTED_COLOR
+        TASKS.style.color = SELECTED_COLOR
         INPUT_BUTTON.forEach(boton => {
             boton.style.color = 'black'
         })
         INPUT_NUMBER.forEach(caja => {
             caja.style.color = 'black'
         })
+        document.getElementsByClassName('stadistic')[0].style.color = 'black'
     } else {
         if (SELECT.value == SELECTED_COLOR) {
             PRINCIPAL.style.color = SELECTED_COLOR
+            STADISTICS.style.color = SELECTED_COLOR
+            TASKS.style.color = SELECTED_COLOR
             INPUT_BUTTON.forEach(boton => {
                 boton.style.color = SELECTED_COLOR
             })

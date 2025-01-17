@@ -24,8 +24,11 @@
                     <option name="opciones" value="yellow">Amarillo</option>
                 </select>
             </div>
+            <input type="checkbox" name="save_tasks" id="save_tasks" checked>
+            <label for="save_tasks">Guardar tareas en local</label>
         </div>
     </div>
+
     <div id="principal" class="principal">
         <div id="container1">
             <h1>CRONÓMETRO</h1>
@@ -62,8 +65,13 @@
             </div>
             <h1 id="timer" class="tiempo">00:00:00</h1>
         </div>
+
         <div id="container2">
             <h1>TEMPORIZADOR</h1>
+            <div style="display: block;">
+                <input type="checkbox" name="hidrate" id="hidrate" checked>
+                <label for="hidrate">Recordatorio: AGUA o CAFÉ</label>
+            </div>
             <div>
                 <label for="">Horas:</label>
                 <div>
@@ -97,11 +105,56 @@
             </div>
             <h1 id="timer_t" class="tiempo">00:00:00</h1>
         </div>
-
     </div>
-    <script src="./cronometro.js"></script>
-    <script src="./temporizador.js"></script>
-    <script src="./tema.js"></script>
+
+    <div id="stadistics">
+        <h1>Estadísticas</h1>
+        <div class="stadistic"></div>
+    </div>
+
+    <section id="task_section">
+        <div id="section_id">
+            <textarea name="" id="write_task" placeholder="Escribe una tarea"></textarea>
+            <input type="button" value="Añadir tarea" id="btn_add_task">
+        </div>
+    </section>
+
+    <section id="pomodoro_section">
+        <h1 id="tasks">TAREAS</h1>
+        <div id="pomodoro_tasks">
+            <div id="todo">
+                <h1>ToDo</h1>
+                <div id="ToDo_tasks" class="tasks">
+                    <label for="">HELLO WORLD 1</label>
+                    <!-- <p>HELLO WORLD 2</p> -->
+                    <!-- <p>HELLO WORLD 3</p> -->
+                    <!-- <p>HELLO WORLD 4</p> -->
+                </div>
+            </div>
+            <div id="working">
+                <h1>Working</h1>
+                <div class="tasks">
+                    <label for="">HELLO WORLD 1</label>
+                    <!-- <p>HELLO WORLD 2</p> -->
+                    <!-- <p>HELLO WORLD 3</p> -->
+                    <!-- <p>HELLO WORLD 4</p> -->
+                </div>
+            </div>
+            <div id="finish">
+                <h1>Finished</h1>
+                <div class="tasks">
+                    <label for="">HELLO WORLD 1</label>
+                    <!-- <p>HELLO WORLD 2</p> -->
+                    <!-- <p>HELLO WORLD 3</p> -->
+                    <!-- <p>HELLO WORLD 4</p> -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script type="module" src="./cronometro.js"></script>
+    <script type="module" src="./temporizador.js"></script>
+    <script type="module" src="./tema.js"></script>
 </body>
 
 </html>
