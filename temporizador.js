@@ -13,6 +13,8 @@ const TEMPORIZADOR = []
 const ToDo_TASK = []
 const WORKING = []
 const FINISHED = []
+const HIDRATE_1 = []
+const HIDRATE_2 = []
 let todo_tasks = 0
 let arrastre = false
 let pomodoro_on = false
@@ -24,6 +26,7 @@ let t_min
 let t_seg
 let t_interval = null
 let t_segundos = 0
+let seguimiento=0
 
 function temporizadorStartTimer() {
     const INTERVALO_T = parseInt(document.getElementById('interval_t').value)
@@ -55,6 +58,7 @@ function temporizadorStartTimer() {
         }
 
         if (t_hs === 0 && t_min === 0 && t_seg === 0) {
+            seguimiento++
             clearInterval(t_interval)
             pomodoro_on = false
             BTN_START_T.disabled = false
@@ -63,12 +67,12 @@ function temporizadorStartTimer() {
             const DIV = document.createElement('div')
             const H1 = document.createElement('h1')
             const H2 = document.createElement('h1')
-            DIV.setAttribute('id', 'container_hidrate_' + t_interval)
+            DIV.setAttribute('id', 'container_hidrate_' + seguimiento)
             DIV.style.width = '100%'
             DIV.style.backgroundColor = 'red'
             H1.setAttribute('id', 'the_end')
             H1.textContent = 'Cuenta finalizada: ' + t_hs + '0:' + t_min + '0:' + t_seg + '0'
-            H2.setAttribute('id', 'hidratacion_' + t_interval)
+            H2.setAttribute('id', 'hidratacion_' + seguimiento)
             H2.style.textAlign = 'center'
             H2.textContent = `¡TOMA AGUA! 😃`
             CONTAINER2.appendChild(DIV)
@@ -79,19 +83,25 @@ function temporizadorStartTimer() {
                 CUENTA_FINAL.remove()
             }
             setTimeout(eliminarResultado, 3000)
-            const DIV_HIDRATE = document.getElementById('container_hidrate_' + t_interval)
+
+            const DIV_HIDRATE = document.getElementById('container_hidrate_' + seguimiento)
+            HIDRATE_1.push(DIV_HIDRATE)
+            HIDRATE_2.push(document.getElementById('hidratacion_' + seguimiento))
+            console.log(HIDRATE_1)
+            console.log(HIDRATE_2)
 
             DIV_HIDRATE.addEventListener('click', () => {
-                const H2_HIDRATE = document.getElementById('hidratacion_' + t_interval)
+                const H2_HIDRATE = document.getElementById('hidratacion_' + seguimiento)
                 H2_HIDRATE.remove()
                 DIV_HIDRATE.remove()
             })
 
-            DIV_HIDRATE.addEventListener('mouseover', () => {
-                const H2_HIDRATE = document.getElementById('hidratacion_' + t_interval)
-                H2_HIDRATE.remove()
-                DIV_HIDRATE.remove()
+            DIV_HIDRATE.addEventListener('mouseover', (e) => {
+                HIDRATE_1.forEach((hidratacion, index) => {
+                    e.target.remove()
+                })
             })
+
             console.log('inicio cronometro', CRONOMETRO_ON.cronometro_on)
             TEMPORIZADOR.push(`${HORAS_T.toString().padStart(2, '0')}:${MINUTOS_T.toString().padStart(2, '0')}:${SEGUNDOS_T.toString().padStart(2, '0')}`)
             TEMPORIZADOR.forEach((marcador, index) => {
@@ -241,8 +251,8 @@ BTN_ADD_TASK.addEventListener('click', () => {
                 element.appendChild(TASK_ELEMENT)
                 if (arrastre == false) {
                     arrastre = true
-                    console.log(DRAG_ELEMENT_NUMBER)
-                    console.log(TASK_ELEMENT)
+                    // console.log(DRAG_ELEMENT_NUMBER)
+                    // console.log(TASK_ELEMENT)
                     if (element.children[0].textContent == 'Working') {
                             document.getElementById('min_t').value = 25
                             pomodoro_on = true
