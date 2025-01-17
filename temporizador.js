@@ -99,13 +99,11 @@ function temporizadorStartTimer() {
             })
             arrastre = false
 
-            const ULTIMO_OBJETO_TEMPORIZADOR_INDICE = document.querySelectorAll('.tasks')[1].parentElement.children[1].children[document.querySelectorAll('.tasks')[1].parentElement.children[1].children.length - 1].children[0].innerHTML
-            const ULTIMO_OBJETO_TEMPORIZADOR_TASK = document.querySelectorAll('.tasks')[1].parentElement.children[1].children[document.querySelectorAll('.tasks')[1].parentElement.children[1].children.length - 1].children[1].innerHTML
-
+            const ULTIMO_OBJETO_TEMPORIZADOR_INDICE = document.querySelectorAll('.tareas')[1].children[document.querySelectorAll('.tareas')[1].children.length-1].children[0].innerHTML
+            const ULTIMO_OBJETO_TEMPORIZADOR_TASK = document.querySelectorAll('.tareas')[1].children[document.querySelectorAll('.tareas')[1].children.length-1].children[1].innerHTML
             const L = document.createElement('label')
             L.innerHTML = `${ULTIMO_OBJETO_TEMPORIZADOR_INDICE} - ${ULTIMO_OBJETO_TEMPORIZADOR_TASK} - TEMPORIZADOR: ${HORAS_T.toString().padStart(2, '0')}:${MINUTOS_T.toString().padStart(2, '0')}:${SEGUNDOS_T.toString().padStart(2, '0')}`
             document.getElementsByClassName('stadistic')[0].appendChild(L)
-            // sessionStorage.setItem('TEMPORIZADOR', `${ULTIMO_OBJETO_TEMPORIZADOR_INDICE} - ${ULTIMO_OBJETO_TEMPORIZADOR_TASK} - TEMPORIZADOR: ${HORAS_T.toString().padStart(2, '0')}:${MINUTOS_T.toString().padStart(2, '0')}:${SEGUNDOS_T.toString().padStart(2, '0')}`)
             sessionStorage.setItem('TEMPORIZADOR', TEMPORIZADOR)
 
             BTN_START.click()
@@ -176,7 +174,7 @@ BTN_RESTART_T.addEventListener('click', () => {
 })
 
 WRITE_TASK.addEventListener('input', () => {
-    if (WRITE_TASK.value == "") {
+    if (WRITE_TASK.value.trim() == "") {
         BTN_ADD_TASK.disabled = true
     } else {
         BTN_ADD_TASK.disabled = false
@@ -218,12 +216,7 @@ BTN_ADD_TASK.addEventListener('click', () => {
         BTN2.value = 'E'
         document.getElementById('todo_task_' + todo_tasks).appendChild(BTN1)
         document.getElementById('todo_task_' + todo_tasks).appendChild(BTN2)
-        ToDo_TASK.push([todo_tasks, RECEIVED_TASK, BTN1, BTN2])
-        console.log(ToDo_TASK)
-        // const ToDo_TASK_SET = new Set(ToDo_TASK)
-        // const ToDo_TASK_MAP = new Map(ToDo_TASK)
-        // console.log(ToDo_TASK_SET)
-        // console.log(ToDo_TASK_MAP)
+        ToDo_TASK.push([todo_tasks, RECEIVED_TASK])
         BTN1.addEventListener('click', () => {
             TODO_TASKS.removeChild(DIV)
         })
@@ -234,7 +227,7 @@ BTN_ADD_TASK.addEventListener('click', () => {
 
         sessionStorage.setItem('to_do', ToDo_TASK)
 
-        const TASKS_ELEMENTS = document.querySelectorAll('.tasks')
+        const TASKS_ELEMENTS = document.querySelectorAll('.tareas')
 
         TASKS_ELEMENTS.forEach((element, index) => {
             element.addEventListener('dragover', (e) => {
@@ -248,8 +241,9 @@ BTN_ADD_TASK.addEventListener('click', () => {
                 element.appendChild(TASK_ELEMENT)
                 if (arrastre == false) {
                     arrastre = true
-                    if (element.parentElement.childNodes[1].textContent == 'Working') {
-                        // if(element.parentElement){
+                    console.log(DRAG_ELEMENT_NUMBER)
+                    console.log(TASK_ELEMENT)
+                    if (element.children[0].textContent == 'Working') {
                             document.getElementById('min_t').value = 25
                             pomodoro_on = true
     
@@ -257,63 +251,58 @@ BTN_ADD_TASK.addEventListener('click', () => {
                                 BTN_STOP.click()
                                 BTN_RESTART.click()
                                 CRONOMETRO_ON.cronometro_on = false
-                                console.log(CRONOMETRO_ON.cronometro_on)
-                                console.log(CRONOMETRO)
-                                sessionStorage.setItem('WORKING', TASK_ELEMENT)
+                                const WORKING_INDEX = element.children[2].children[0].textContent
+                                const WORKING_TASK = element.children[2].children[1].textContent
+                                WORKING.push(WORKING_INDEX, WORKING_TASK)
+                                sessionStorage.setItem('WORKING', WORKING)
                             }
     
                             BTN_START_T.click()
-                        // }
-                    } else if (element.parentNode.children[0].textContent == 'Finished'){
-                        console.log(`ARRASTRE DISTINTO A ...Working...`)
-                        console.log(`ARRASTRANDO HACIA ${element.parentNode.children[0].textContent}`)
-                        sessionStorage.setItem('FINISHED', TASK_ELEMENT)
+                    } else if (element.children[0].textContent == 'Finished'){
+                        const FINISHED_INDEX = element.children[2].children[0].textContent
+                        const FINISHED_TASK = element.children[2].children[1].textContent
+                        FINISHED.push(FINISHED_INDEX, FINISHED_TASK)
+                        sessionStorage.setItem('FINISHED', FINISHED)
                         arrastre = false
                     }
                 }
             })
         })
 
-        BTN2.addEventListener('click', (e) => {
-            BTN2.disabled = true
-            const FATHER = e.target.parentNode.childNodes[1]
-            const CONTAINER = e.target.parentNode
-            CONTAINER.style.position = 'relative'
-            // console.log(e.target.parentNode)
-            // console.log(FATHER)
-            const EDIT = document.createElement('input')
-            EDIT.setAttribute('type', 'text')
-            EDIT.setAttribute('placeholder', 'Edita el campo')
-            EDIT.style.position = 'absolute'
-            EDIT.style.top = '0px'
-            EDIT.style.left = CONTAINER.offsetWidth + 'px'
-            e.target.parentNode.appendChild(EDIT)
-            EDIT.focus()
-            EDIT.addEventListener('keydown', (e) => {
-                if (e.key === "Enter") {
-                    if (EDIT.value !== "") {
-                        console.log(ToDo_TASK)
-                        FATHER.textContent = EDIT.value
-                        const INDEX = parseInt(e.target.parentNode.children[0].id)-1
-                        const EDITED_TEXT = e.target.parentNode.children[1].textContent
-                        // console.log(INDEX)
-                        // console.log(e.target.parentNode.children[0].id)
-                        console.log(e.target.parentNode.children[1].textContent)
-                        ToDo_TASK[INDEX][1] = EDITED_TEXT
-                        EDIT.remove()
-                        BTN2.disabled = false
-                        console.log(ToDo_TASK)
-                    } else {
+            BTN2.addEventListener('click', (e) => {
+                BTN2.disabled = true
+                const FATHER = e.target.parentNode.childNodes[1]
+                const CONTAINER = e.target.parentNode
+                CONTAINER.style.position = 'relative'
+                const EDIT = document.createElement('input')
+                EDIT.setAttribute('type', 'text')
+                EDIT.setAttribute('placeholder', 'Edita el campo')
+                EDIT.style.position = 'absolute'
+                EDIT.style.top = '0px'
+                EDIT.style.left = CONTAINER.offsetWidth + 'px'
+                e.target.parentNode.appendChild(EDIT)
+                EDIT.focus()
+                EDIT.addEventListener('keydown', (e) => {
+                    if (e.key === "Enter") {
+                        if (EDIT.value !== "") {
+                            console.log(ToDo_TASK)
+                            FATHER.textContent = EDIT.value
+                            const INDEX = parseInt(e.target.parentNode.children[0].id)-1
+                            const EDITED_TEXT = e.target.parentNode.children[1].textContent
+                            console.log(e.target.parentNode.children[1].textContent)
+                            ToDo_TASK[INDEX][1] = EDITED_TEXT
+                            EDIT.remove()
+                            BTN2.disabled = false
+                            console.log(ToDo_TASK)
+                        } else {
+                            EDIT.remove()
+                            BTN2.disabled = false
+                        }
+                    } else if (e.key === 'Escape') {
                         EDIT.remove()
                         BTN2.disabled = false
                     }
-                } else if (e.key === 'Escape') {
-                    EDIT.remove()
-                    BTN2.disabled = false
-                }
+                })
             })
-        })
-    } else {
-        alert(`INGRESA UNA TAREA... ... ...`)
     }
 })
