@@ -3,6 +3,7 @@ const TIMER = document.getElementById('timer')
 const BTN_START = document.getElementById('start')
 const BTN_STOP = document.getElementById('stop')
 const BTN_RESTART = document.getElementById('restart')
+const CHK_SAVE_TASKS = document.getElementById('save_tasks') 
 const CRONOMETRO = []
 BTN_STOP.disabled = true
 
@@ -14,6 +15,22 @@ let segundos = 0
 const CRONOMETRO_ON = {
     cronometro_on:false
 }
+
+CHK_SAVE_TASKS.addEventListener('click', () => {
+    if(CHK_SAVE_TASKS.checked==true){
+        localStorage.getItem('CRONOMETRO')
+        localStorage.getItem('FINISHED')
+        localStorage.getItem('TEMPORIZADOR')
+        localStorage.getItem('WORKING')
+        localStorage.getItem('to_do')
+    } else {
+        localStorage.removeItem('CRONOMETRO')
+        localStorage.removeItem('FINISHED')
+        localStorage.removeItem('TEMPORIZADOR')
+        localStorage.removeItem('WORKING')
+        localStorage.removeItem('to_do')
+    }
+})
 
 function startTimer() {
     CRONOMETRO_ON.cronometro_on = true
@@ -119,7 +136,7 @@ BTN_STOP.addEventListener('click', () => {
     }
     CRONOMETRO.push(`${hs.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`)
     console.log(CRONOMETRO)
-    sessionStorage.setItem('CRONOMETRO', CRONOMETRO)
+    localStorage.setItem('CRONOMETRO', CRONOMETRO)
     CRONOMETRO_ON.cronometro_on = false
     clearInterval(interval)
     const L = document.createElement('label')

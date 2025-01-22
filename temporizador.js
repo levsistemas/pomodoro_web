@@ -26,7 +26,7 @@ let t_min
 let t_seg
 let t_interval = null
 let t_segundos = 0
-let seguimiento=0
+let seguimiento = 0
 
 function temporizadorStartTimer() {
     const INTERVALO_T = parseInt(document.getElementById('interval_t').value)
@@ -72,6 +72,7 @@ function temporizadorStartTimer() {
             DIV.style.backgroundColor = 'red'
             H1.setAttribute('id', 'the_end')
             H1.textContent = 'Cuenta finalizada: ' + t_hs + '0:' + t_min + '0:' + t_seg + '0'
+            H1.classList.add('hidrate')
             H2.setAttribute('id', 'hidratacion_' + seguimiento)
             H2.style.textAlign = 'center'
             H2.textContent = `¡TOMA AGUA! 😃`
@@ -109,12 +110,12 @@ function temporizadorStartTimer() {
             })
             arrastre = false
 
-            const ULTIMO_OBJETO_TEMPORIZADOR_INDICE = document.querySelectorAll('.tareas')[1].children[document.querySelectorAll('.tareas')[1].children.length-1].children[0].innerHTML
-            const ULTIMO_OBJETO_TEMPORIZADOR_TASK = document.querySelectorAll('.tareas')[1].children[document.querySelectorAll('.tareas')[1].children.length-1].children[1].innerHTML
+            const ULTIMO_OBJETO_TEMPORIZADOR_INDICE = document.querySelectorAll('.tareas')[1].children[document.querySelectorAll('.tareas')[1].children.length - 1].children[0].innerHTML
+            const ULTIMO_OBJETO_TEMPORIZADOR_TASK = document.querySelectorAll('.tareas')[1].children[document.querySelectorAll('.tareas')[1].children.length - 1].children[1].innerHTML
             const L = document.createElement('label')
             L.innerHTML = `${ULTIMO_OBJETO_TEMPORIZADOR_INDICE} - ${ULTIMO_OBJETO_TEMPORIZADOR_TASK} - TEMPORIZADOR: ${HORAS_T.toString().padStart(2, '0')}:${MINUTOS_T.toString().padStart(2, '0')}:${SEGUNDOS_T.toString().padStart(2, '0')}`
             document.getElementsByClassName('stadistic')[0].appendChild(L)
-            sessionStorage.setItem('TEMPORIZADOR', TEMPORIZADOR)
+            localStorage.setItem('TEMPORIZADOR', TEMPORIZADOR)
 
             BTN_START.click()
         } else {
@@ -235,13 +236,17 @@ BTN_ADD_TASK.addEventListener('click', () => {
             e.dataTransfer.setData('text/plain', UNIQUE_ID)
         })
 
-        sessionStorage.setItem('to_do', ToDo_TASK)
+        localStorage.setItem('to_do', ToDo_TASK)
 
         const TASKS_ELEMENTS = document.querySelectorAll('.tareas')
+
+        FINISHED.length = 0
 
         TASKS_ELEMENTS.forEach((element, index) => {
             element.addEventListener('dragover', (e) => {
                 e.preventDefault()
+                // console.log(index, element)
+                // console.log(e.target)
             })
 
             element.addEventListener('drop', (e) => {
@@ -251,68 +256,172 @@ BTN_ADD_TASK.addEventListener('click', () => {
                 element.appendChild(TASK_ELEMENT)
                 if (arrastre == false) {
                     arrastre = true
+
+                    // console.log(index, element)
+                    console.log(e.target)
+
                     // console.log(DRAG_ELEMENT_NUMBER)
-                    // console.log(TASK_ELEMENT)
+                    console.log(TASK_ELEMENT)
+
+                    comboToDo()
+                    comboWorking()
+                    comboFinished()
+
                     if (element.children[0].textContent == 'Working') {
-                            document.getElementById('min_t').value = 25
-                            pomodoro_on = true
-    
-                            if (CRONOMETRO_ON.cronometro_on == true) {
-                                BTN_STOP.click()
-                                BTN_RESTART.click()
-                                CRONOMETRO_ON.cronometro_on = false
-                                const WORKING_INDEX = element.children[2].children[0].textContent
-                                const WORKING_TASK = element.children[2].children[1].textContent
-                                WORKING.push(WORKING_INDEX, WORKING_TASK)
-                                sessionStorage.setItem('WORKING', WORKING)
-                            }
-    
-                            BTN_START_T.click()
-                    } else if (element.children[0].textContent == 'Finished'){
-                        const FINISHED_INDEX = element.children[2].children[0].textContent
-                        const FINISHED_TASK = element.children[2].children[1].textContent
-                        FINISHED.push(FINISHED_INDEX, FINISHED_TASK)
-                        sessionStorage.setItem('FINISHED', FINISHED)
+                        document.getElementById('min_t').value = 25
+                        pomodoro_on = true
+
+                        if (CRONOMETRO_ON.cronometro_on == true) {
+                            BTN_STOP.click()
+                            BTN_RESTART.click()
+                            CRONOMETRO_ON.cronometro_on = false
+                            // const WORKING_INDEX = element.children[2].children[0].textContent
+                            // const WORKING_TASK = element.children[2].children[1].textContent
+                            // WORKING.push(WORKING_INDEX, WORKING_TASK)
+                            // localStorage.setItem('WORKING', WORKING)
+                        }
+
+                        BTN_START_T.click()
+                    }
+
+                    if (element.children[0].textContent == 'Finished') {
+                        // const FINISHED_INDEX = element.children[2].children[0].textContent
+                        // const FINISHED_TASK = element.children[2].children[1].textContent
+
+                        // element.childNodes.forEach((element, index) => {
+                            // if (index > 4) {
+                                // console.log(index, element)
+                            // }
+                        // })
+
+                        // FINISHED.push(FINISHED_INDEX, FINISHED_TASK)
+                        // localStorage.setItem('FINISHED', FINISHED)
                         arrastre = false
                     }
                 }
             })
         })
 
-            BTN2.addEventListener('click', (e) => {
-                BTN2.disabled = true
-                const FATHER = e.target.parentNode.childNodes[1]
-                const CONTAINER = e.target.parentNode
-                CONTAINER.style.position = 'relative'
-                const EDIT = document.createElement('input')
-                EDIT.setAttribute('type', 'text')
-                EDIT.setAttribute('placeholder', 'Edita el campo')
-                EDIT.style.position = 'absolute'
-                EDIT.style.top = '0px'
-                EDIT.style.left = CONTAINER.offsetWidth + 'px'
-                e.target.parentNode.appendChild(EDIT)
-                EDIT.focus()
-                EDIT.addEventListener('keydown', (e) => {
-                    if (e.key === "Enter") {
-                        if (EDIT.value !== "") {
-                            console.log(ToDo_TASK)
-                            FATHER.textContent = EDIT.value
-                            const INDEX = parseInt(e.target.parentNode.children[0].id)-1
-                            const EDITED_TEXT = e.target.parentNode.children[1].textContent
-                            console.log(e.target.parentNode.children[1].textContent)
-                            ToDo_TASK[INDEX][1] = EDITED_TEXT
-                            EDIT.remove()
-                            BTN2.disabled = false
-                            console.log(ToDo_TASK)
-                        } else {
-                            EDIT.remove()
-                            BTN2.disabled = false
-                        }
-                    } else if (e.key === 'Escape') {
+        BTN2.addEventListener('click', (e) => {
+            BTN2.disabled = true
+            const FATHER = e.target.parentNode.childNodes[1]
+            const CONTAINER = e.target.parentNode
+            CONTAINER.style.position = 'relative'
+            const EDIT = document.createElement('input')
+            EDIT.setAttribute('type', 'text')
+            EDIT.setAttribute('placeholder', 'Edita el campo')
+            EDIT.style.position = 'absolute'
+            EDIT.style.top = '0px'
+            EDIT.style.left = CONTAINER.offsetWidth + 'px'
+            e.target.parentNode.appendChild(EDIT)
+            EDIT.focus()
+            EDIT.addEventListener('keydown', (e) => {
+                if (e.key === "Enter") {
+                    // const ToDo_TASK = []
+                    if (EDIT.value !== "") {
+                        FATHER.textContent = EDIT.value
+                        const INDEX = parseInt(e.target.parentNode.children[0].id) - 1
+                        const EDITED_TEXT = e.target.parentNode.children[1].textContent
+                        console.log(e.target.parentNode.children[1].textContent)
                         EDIT.remove()
                         BTN2.disabled = false
+                        // console.log(ToDo_TASK)
+                        CONTAINER.removeAttribute('style')
+
+                        const ToDo_TASK = []
+                        // ToDo_TASK[INDEX][1] = EDITED_TEXT
+                        console.log(ToDo_TASK)
+
+                        //EN ESTA LINEA DEBEMOS REALIZAR UN RECORRIDO DE TODAS LAS CARDS DE LAS TAREAS To Do
+                        //PARA VOLVER A AGREGARLAS AL LOCALSTORAGE DE 'to_do' Y SOBREESCRIBIR NUEVAMENTE LOS VALORES YA QUE ESTAMOS EDITANDO UNA DE ELLAS
+                        document.getElementById('ToDo_tasks').childNodes.forEach((elemento, index) => {
+                            if (index > 0) {
+                                elemento.childNodes.forEach((elements, indexado) => {
+                                    if (indexado < 2) {
+                                        // console.log(indexado, elements)
+                                        console.log(elements.textContent)
+                                        ToDo_TASK.push(elements.textContent)
+                                    }
+                                })
+                            }
+                        })
+                        localStorage.setItem('to_do', ToDo_TASK)
+
+                        document.getElementById('working').childNodes[5].childNodes.forEach((elemento, index) => {
+                            if (index < 2) {
+                                console.log(index, elemento)
+                                console.log(elemento.textContent)
+                                WORKING.push(elemento.textContent)
+                            }
+                        })
+                        localStorage.setItem('WORKING', WORKING)
+
+                    } else {
+                        EDIT.remove()
+                        BTN2.disabled = false
+                        CONTAINER.removeAttribute('style')
                     }
-                })
+                } else if (e.key === 'Escape') {
+                    EDIT.remove()
+                    BTN2.disabled = false
+                    CONTAINER.removeAttribute('style')
+                }
             })
+        })
     }
 })
+
+function comboToDo(){
+    console.log(`Funcion combo ToDo`)
+    ToDo_TASK.length=0
+    const TODO = document.getElementById('todo')
+    TODO.childNodes[3].childNodes.forEach((element, index) => {
+        if(index > 0){
+            element.childNodes.forEach((elemento, index) => {
+                if(index < 2){
+                    console.log(elemento.textContent)
+                    ToDo_TASK.push(elemento.textContent)
+                    localStorage.removeItem('to_do')
+                }
+            })
+        }
+    })
+    localStorage.setItem('to_do', ToDo_TASK)
+}
+
+function comboWorking(){
+    console.log(`Funcion combo Working`)
+    WORKING.length=0
+    localStorage.removeItem('WORKING')
+    const WORK = document.getElementById('working')
+    if(WORK.childNodes[5]){
+        WORK.childNodes[5].childNodes.forEach((element, index) => {
+            if(index < 2){
+                console.log(element.textContent)
+                WORKING.push(element.textContent)
+                localStorage.removeItem('WORKING')
+            }
+        })
+        localStorage.setItem('WORKING', WORKING)
+    }
+}
+
+function comboFinished(){
+    console.log(`Funcion combo Finished`)
+    FINISHED.length=0
+    localStorage.removeItem('FINISHED')
+    const FINISH = document.getElementById('finish')
+    
+    FINISH.childNodes.forEach((element, index) => {
+        if(index > 4){
+            element.childNodes.forEach((elemento, index) => {
+                if(index < 2){
+                    console.log(elemento.textContent)
+                    FINISHED.push(elemento.textContent)
+                    localStorage.removeItem('FINISHED')
+                }
+            })
+        }
+        localStorage.setItem('FINISHED', FINISHED)
+    })
+}

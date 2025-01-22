@@ -8,7 +8,7 @@ const STADISTICS = document.getElementById('stadistics')
 const TASKS = document.getElementById('tasks')
 SELECT.addEventListener('change', (event) => {
     const SELECTED_COLOR = event.target.value
-    if (SELECT.value == 'yellow' || SELECT.value == 'white') {
+    if (SELECT.value == 'yellow' || SELECT.value == 'white' || SELECT.value == 'lightblue' || SELECT.value == 'violet' || SELECT.value == 'green') {
         PRINCIPAL.style.color = SELECTED_COLOR
         STADISTICS.style.color = SELECTED_COLOR
         TASKS.style.color = SELECTED_COLOR
