@@ -5,6 +5,12 @@ const BTN_STOP = document.getElementById('stop')
 const BTN_RESTART = document.getElementById('restart')
 const CHK_SAVE_TASKS = document.getElementById('save_tasks') 
 const CRONOMETRO = []
+const STADISTICS = []
+const ESTADISTICAS = ((...name) => {
+    return name.map((valor, index) => ({ index, valor }))
+})
+
+// console.log(ESTADISTICAS('Leandro','Eduardo','Vega'))
 BTN_STOP.disabled = true
 
 let hs
@@ -135,13 +141,17 @@ BTN_STOP.addEventListener('click', () => {
         BTN_STOP.disabled = true
     }
     CRONOMETRO.push(`${hs.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`)
-    console.log(CRONOMETRO)
+    // console.log(CRONOMETRO)
     localStorage.setItem('CRONOMETRO', CRONOMETRO)
     CRONOMETRO_ON.cronometro_on = false
     clearInterval(interval)
     const L = document.createElement('label')
     L.innerHTML = `CRONOMETRO: ${hs.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`
     document.getElementsByClassName('stadistic')[0].appendChild(L)
+    STADISTICS.push(`CRONOMETRO: ${hs.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`)
+    // console.log(ESTADISTICAS(`CRONOMETRO: ${hs.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`))
+    console.log(STADISTICS)
+    // console.log(ESTADISTICAS)
 })
 
 BTN_RESTART.addEventListener('click', () => {
@@ -167,4 +177,4 @@ BTN_RESTART.addEventListener('click', () => {
     }
 })
 
-export { startTimer, CRONOMETRO, CRONOMETRO_ON, BTN_START, BTN_STOP, BTN_RESTART, hs, min, seg }
+export { startTimer, CRONOMETRO, CRONOMETRO_ON, BTN_START, BTN_STOP, BTN_RESTART, STADISTICS, ESTADISTICAS, hs, min, seg }

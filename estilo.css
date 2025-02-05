@@ -13,7 +13,9 @@ body {
 }
 
 @media (min-width: 1441px) and (max-width: 1920px) {
-    
+    .dragging {
+        opacity: 0.5;
+    }
 }
 
 @media (min-width: 1025px) and (max-width: 1400px) {
@@ -110,7 +112,8 @@ body {
     }
 
     .hidrate {
-        font-size: 1.2em;
+        font-size: 18px;
+        /* font-size: 1.2em; */
     }
 
     section {
