@@ -376,8 +376,8 @@ BTN_ADD_TASK.addEventListener('click', () => {
                         if(document.getElementById('working').childNodes[5]){
                             document.getElementById('working').childNodes[5].childNodes.forEach((elemento, index) => {
                                 if (index < 2) {
-                                    console.log(index, elemento)
-                                    console.log(elemento.textContent)
+                                    // console.log(index, elemento)
+                                    // console.log(elemento.textContent)
                                     WORKING.push(elemento.textContent)
                                 }
                             })
