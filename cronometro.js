@@ -1,11 +1,22 @@
 const TIMER = document.getElementById('timer')
-
 const BTN_START = document.getElementById('start')
 const BTN_STOP = document.getElementById('stop')
 const BTN_RESTART = document.getElementById('restart')
 const CHK_SAVE_TASKS = document.getElementById('save_tasks') 
+const CRONOMETRO_ON = { cronometro_on:false }
 const CRONOMETRO = []
 const STADISTICS = []
+
+let hs
+let min
+let seg
+let interval = null
+let segundos = 0
+let worker = {
+    worker:0,
+    worker2:0
+}
+
 const ESTADISTICAS = ((...name) => {
     return name.map((valor, index) => ({ index, valor }))
 })
@@ -13,14 +24,6 @@ const ESTADISTICAS = ((...name) => {
 // console.log(ESTADISTICAS('Leandro','Eduardo','Vega'))
 BTN_STOP.disabled = true
 
-let hs
-let min
-let seg
-let interval = null
-let segundos = 0
-const CRONOMETRO_ON = {
-    cronometro_on:false
-}
 
 CHK_SAVE_TASKS.addEventListener('click', () => {
     if(CHK_SAVE_TASKS.checked==true){
@@ -39,6 +42,11 @@ CHK_SAVE_TASKS.addEventListener('click', () => {
 })
 
 function startTimer() {
+
+    if (worker.worker) worker.worker.terminate();
+
+    worker.worker = new Worker("worker.js")
+
     CRONOMETRO_ON.cronometro_on = true
     console.log('cronometro original, iniciando...', CRONOMETRO_ON.cronometro_on)
     
@@ -177,4 +185,4 @@ BTN_RESTART.addEventListener('click', () => {
     }
 })
 
-export { startTimer, CRONOMETRO, CRONOMETRO_ON, BTN_START, BTN_STOP, BTN_RESTART, STADISTICS, ESTADISTICAS, hs, min, seg }
+export { startTimer, CRONOMETRO, CRONOMETRO_ON, BTN_START, BTN_STOP, BTN_RESTART, STADISTICS, ESTADISTICAS, hs, min, seg, worker }
