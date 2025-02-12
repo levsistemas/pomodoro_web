@@ -1,4 +1,4 @@
-import { BTN_RESTART, BTN_START, BTN_STOP, CRONOMETRO, CRONOMETRO_ON, STADISTICS, ESTADISTICAS, hs, min, seg, myWorker } from "./cronometro.js"
+import { BTN_RESTART, BTN_START, BTN_STOP, CRONOMETRO, CRONOMETRO_ON, STADISTICS, hs, min, seg, myWorker } from "./cronometro.js"
 
 const TIMER_T = document.getElementById('timer_t')
 const STADISTIC_TIMER = document.getElementById('stadistic_timer')
