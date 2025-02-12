@@ -169,4 +169,4 @@ BTN_RESTART.addEventListener('click', () => {
     }
 })
 
-export { startTimer, CRONOMETRO, CRONOMETRO_ON, BTN_START, BTN_STOP, BTN_RESTART, STADISTICS, ESTADISTICAS, hs, min, seg, myWorker }
+export { startTimer, CRONOMETRO, CRONOMETRO_ON, BTN_START, BTN_STOP, BTN_RESTART, STADISTICS, hs, min, seg, myWorker }
