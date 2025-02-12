@@ -1,4 +1,4 @@
-import { BTN_RESTART, BTN_START, BTN_STOP, CRONOMETRO, CRONOMETRO_ON, STADISTICS, ESTADISTICAS, hs, min, seg, worker } from "./cronometro.js"
+import { BTN_RESTART, BTN_START, BTN_STOP, CRONOMETRO, CRONOMETRO_ON, STADISTICS, ESTADISTICAS, hs, min, seg, myWorker } from "./cronometro.js"
 
 const TIMER_T = document.getElementById('timer_t')
 const STADISTIC_TIMER = document.getElementById('stadistic_timer')
@@ -11,6 +11,7 @@ const WRITE_TASK = document.getElementById('write_task')
 const BTN_ADD_TASK = document.getElementById('btn_add_task')
 const TODO_TASKS = document.getElementById('ToDo_tasks')
 const ALARMA = document.getElementById('alarm-sound')
+const TIME_DATE = document.getElementById('time_date')
 const TEMPORIZADOR = []
 const ToDo_TASK = []
 const WORKING = []
@@ -45,6 +46,7 @@ let stadistics_mins
 let stadistics_secs
 let stadistics_clock_min
 let stadistics_clock_seg
+let multi_worker = false
 
 function temporizadorStartTimer() {
     INTERVALO_T = parseInt(document.getElementById('interval_t').value)
@@ -60,23 +62,7 @@ function temporizadorStartTimer() {
 
     t_segundos = t_min * 60 + t_seg
 
-    if (worker.worker) worker.worker.terminate();
-    worker.worker = new Worker("worker.js")
-    worker.worker.postMessage({ action: "start", time: t_segundos })
-
-    worker.worker.onmessage = function (e) {
-        if (e.data.finished) {
-            theWorker()
-        } else {
-            icons()
-            mins = Math.floor(e.data.timeLeft / 60)
-            secs = e.data.timeLeft % 60
-            t_min = mins
-            t_seg = secs
-            TIMER_T.textContent = `${t_hs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-            elPomodoro()
-        }
-    }
+    multiWorker()
 }
 
 BTN_START_T.addEventListener('click', () => {
@@ -98,10 +84,10 @@ BTN_STOP_T.addEventListener('click', () => {
         BTN_START_T.disabled = false
         BTN_STOP_T.disabled = true
     }
-    if (worker.worker) {
-        worker.worker.postMessage({ action: "pause" });
-        worker.worker.terminate();
-    }
+    // if (myWorker.worker) {
+    //     myWorker.worker.postMessage({ action: "pause" });
+    //     myWorker.worker.terminate();
+    // }
     // clearInterval(t_interval)
     pomodoro_on = false
 })
@@ -223,13 +209,14 @@ BTN_ADD_TASK.addEventListener('click', () => {
                         document.body.appendChild(H1)
                         H1.style.position = 'absolute'
                         H1.style.backgroundColor = 'blue'
+                        H1.style.color = 'white'
                         H1.style.top = "50%"
                         H1.style.left = "25%"
                         H1.style.zIndex = 1
                         function deleteWarning() {
                             H1.remove()
                         }
-                        setTimeout(deleteWarning, 5000)
+                        setTimeout(deleteWarning, 6000)
                     } else {
                         e.preventDefault()
                         const DRAG_ELEMENT_NUMBER = e.dataTransfer.getData('text/plain')
@@ -256,27 +243,6 @@ BTN_ADD_TASK.addEventListener('click', () => {
 
                             if (element.children[0].textContent == 'Finished') {
                                 arrastre = false
-                            }
-
-                            workerStadistics()
-                            function workerStadistics() {
-                                if (worker.worker2) worker.worker.terminate();
-                                worker.worker2 = new Worker("worker.js")
-                                worker.worker2.postMessage({ action: "start2", time: estadisticas })
-
-                                worker.worker2.onmessage = function (e) {
-                                    if (e.data.finished) {
-                                        console.log('tiempo terminado')
-                                    } else {
-                                        // icons()
-                                        stadistics_mins = Math.floor(e.data.timeLeft * 60)
-                                        stadistics_secs = e.data.timeLeft
-                                        stadistics_clock_min = stadistics_mins
-                                        stadistics_clock_seg = stadistics_secs
-                                        STADISTIC_TIMER.textContent = `${t_hs.toString().padStart(2, '0')}:${stadistics_clock_min.toString().padStart(2, '0')}:${stadistics_clock_seg.toString().padStart(2, '0')}`
-                                        // elPomodoro()
-                                    }
-                                }
                             }
                         }
                     }
@@ -409,22 +375,10 @@ function comboFinished() {
 }
 
 function theWorker() {
-    let fecha = Date()
-    let fecha_amiga
-    const FECHA = fecha.split(' ')
-    FECHA.map((date, index) => {
-        if(index < 5){
-            if(fecha_amiga !== undefined){
-                fecha_amiga = fecha_amiga + ' ' + date
-            } else {
-                fecha_amiga = date
-            }
-        }
-    })
-    console.log(fecha_amiga)
-    // console.log(Date())
-    worker.worker.terminate();
+    Date().slice(0, 24)
+    console.log(new Date().toLocaleString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false }))
     TIMER_T.textContent = `${t_hs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+    ALARMA.currentTime = 0
     ALARMA.play();
     document.getElementById('picar').style.display = 'none'
     document.getElementById('batman').style.display = 'none'
@@ -671,4 +625,70 @@ function activarTemporizador() {
     BTN_START_T.hidden = false
     BTN_STOP_T.hidden = false
     BTN_RESTART_T.hidden = false
+}
+
+function showTimeAndDate() {
+    setInterval(() => {
+        let day = new Date().toLocaleString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false })
+        let day_toUpperCase = day.slice(0, 1).toUpperCase()
+        day = day_toUpperCase + day.slice(1)
+        TIME_DATE.textContent = day + 'hs'
+    }, 1000)
+}
+showTimeAndDate()
+
+function multiWorker() {
+    myWorker.worker = new Worker("multi_worker.js")
+
+    function startPomodoro(id, duration) {
+        myWorker.worker.postMessage({ action: "start", id, type: "pomodoro", duration })
+    }
+
+    function startCronometro(id) {
+        if (multi_worker == false) {
+            myWorker.worker.postMessage({ action: "start", id, type: "cronometro" })
+            multi_worker = true
+        }
+    }
+
+    function stopPomodoro(id) {
+        myWorker.worker.postMessage({ action: "start", id, type: "pomodoro" })
+    }
+
+    function stopCronometro(id) {
+        myWorker.worker.postMessage({ action: "stop", id, type: "cronometro" })
+    }
+
+    myWorker.worker.onmessage = function (e) {
+        const { id, type, timeLeft, timeElapsed, finished, stopped } = e.data
+
+        if (type === "pomodoro") {
+            if (finished) {
+                console.log("Pomodoro terminado")
+                theWorker()
+            } else if (stopped) {
+                console.log("Pomodoro detenido")
+            } else {
+                icons()
+                mins = Math.floor(e.data.timeLeft / 60)
+                secs = e.data.timeLeft % 60
+                t_min = mins
+                t_seg = secs
+                if (!isNaN(mins) && !isNaN(secs)) {
+                    TIMER_T.textContent = `${t_hs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+                    elPomodoro()
+                }
+            }
+        } else if (type === "cronometro") {
+            if (stopped) {
+                console.log("Cronómetro detenido")
+            } else {
+                stadistics_clock_min = Math.floor(timeElapsed / 60)
+                stadistics_clock_seg = timeElapsed % 60
+                STADISTIC_TIMER.textContent = `${t_hs.toString().padStart(2, '0')}:${stadistics_clock_min.toString().padStart(2, '0')}:${stadistics_clock_seg.toString().padStart(2, '0')}`
+            }
+        }
+    }
+    startPomodoro("pomodoro", 25 * 60)
+    startCronometro("cronometro")
 }

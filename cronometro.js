@@ -12,18 +12,11 @@ let min
 let seg
 let interval = null
 let segundos = 0
-let worker = {
-    worker:0,
-    worker2:0
+let myWorker = {
+    worker:0
 }
 
-const ESTADISTICAS = ((...name) => {
-    return name.map((valor, index) => ({ index, valor }))
-})
-
-// console.log(ESTADISTICAS('Leandro','Eduardo','Vega'))
 BTN_STOP.disabled = true
-
 
 CHK_SAVE_TASKS.addEventListener('click', () => {
     if(CHK_SAVE_TASKS.checked==true){
@@ -42,11 +35,6 @@ CHK_SAVE_TASKS.addEventListener('click', () => {
 })
 
 function startTimer() {
-
-    if (worker.worker) worker.worker.terminate();
-
-    worker.worker = new Worker("worker.js")
-
     CRONOMETRO_ON.cronometro_on = true
     console.log('cronometro original, iniciando...', CRONOMETRO_ON.cronometro_on)
     
@@ -60,7 +48,6 @@ function startTimer() {
         seg = SECONDS
     }
     interval = setInterval(() => {
-        console.log('Intervalo cronometro: ', interval)
         segundos++
         seg++
         if (seg >= 60) {
@@ -149,7 +136,6 @@ BTN_STOP.addEventListener('click', () => {
         BTN_STOP.disabled = true
     }
     CRONOMETRO.push(`${hs.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`)
-    // console.log(CRONOMETRO)
     localStorage.setItem('CRONOMETRO', CRONOMETRO)
     CRONOMETRO_ON.cronometro_on = false
     clearInterval(interval)
@@ -157,9 +143,7 @@ BTN_STOP.addEventListener('click', () => {
     L.innerHTML = `CRONOMETRO: ${hs.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`
     document.getElementsByClassName('stadistic')[0].appendChild(L)
     STADISTICS.push(`CRONOMETRO: ${hs.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`)
-    // console.log(ESTADISTICAS(`CRONOMETRO: ${hs.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`))
     console.log(STADISTICS)
-    // console.log(ESTADISTICAS)
 })
 
 BTN_RESTART.addEventListener('click', () => {
@@ -185,4 +169,4 @@ BTN_RESTART.addEventListener('click', () => {
     }
 })
 
-export { startTimer, CRONOMETRO, CRONOMETRO_ON, BTN_START, BTN_STOP, BTN_RESTART, STADISTICS, ESTADISTICAS, hs, min, seg, worker }
+export { startTimer, CRONOMETRO, CRONOMETRO_ON, BTN_START, BTN_STOP, BTN_RESTART, STADISTICS, ESTADISTICAS, hs, min, seg, myWorker }
