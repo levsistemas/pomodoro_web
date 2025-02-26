@@ -91,6 +91,10 @@ body {
 }
 
 @media (min-width:350px) and (max-width: 767px) {
+    #time_date {
+        font-size: 1em;
+    }
+    
     body {
         width: 100%;
     }

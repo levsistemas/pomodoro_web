@@ -1,3 +1,5 @@
+import { TIME_DATE } from "./temporizador.js"
+
 const DARKMODE = document.getElementById('darkmode')
 const PRINCIPAL = document.querySelector('#principal')
 const SELECT = document.getElementById('select')
@@ -12,6 +14,7 @@ SELECT.addEventListener('change', (event) => {
         PRINCIPAL.style.color = SELECTED_COLOR
         STADISTICS.style.color = SELECTED_COLOR
         TASKS.style.color = SELECTED_COLOR
+        TIME_DATE.style.color = SELECTED_COLOR
         INPUT_BUTTON.forEach(boton => {
             boton.style.color = 'black'
         })
@@ -21,6 +24,7 @@ SELECT.addEventListener('change', (event) => {
         document.getElementsByClassName('stadistic')[0].style.color = 'black'
     } else {
         if (SELECT.value == SELECTED_COLOR) {
+            TIME_DATE.style.color = SELECTED_COLOR
             PRINCIPAL.style.color = SELECTED_COLOR
             STADISTICS.style.color = SELECTED_COLOR
             TASKS.style.color = SELECTED_COLOR
