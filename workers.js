@@ -5,10 +5,11 @@ let timeLeft;
 let statistics_on = false
 let timeElapsed = 0
 let timeElapsed1 = 0
+let interval_relax = 1000
 let interval_time = 1000
 
 self.onmessage = function (e) {
-    const { action, id, type, duration, INTERVALO_T } = e.data
+    const { action, id, type, duration, interval, INTERVALO_T } = e.data
     
     if (action === "start") {
         if (type === "pomodoro") {
@@ -29,10 +30,12 @@ self.onmessage = function (e) {
             }, interval_time)
         } else if (type === "cronometro") {
             if (cronometros[id]) return
+            interval_relax=interval
             cronometros[id] = setInterval(() => {
                 timeElapsed++
+
                 self.postMessage({ id, type, timeElapsed })
-            }, 1000)
+            }, interval_relax)
         } else if (type === "statistic") {
             if (statistic[id]) return
             statistic[id] = setInterval(() => {

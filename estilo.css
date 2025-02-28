@@ -1,5 +1,5 @@
 :root {
-    --gris_oscuro: rgb(56, 53, 53)
+    --gris_oscuro: rgb(56, 53, 53);
 }
 
 * {
@@ -198,16 +198,20 @@ body {
     position: relative;
 }
 
-.inicio_temporizador {
+.twentifive_temporizador {
     background-color: green;
 }
 
 .ten_temporizador {
-    background-color: yellow;
+    background-color: orange;
 }
 
 .five_temporizador {
     background-color: red;
+}
+
+.long_break {
+    background-color: greenyellow;
 }
 
 .tiempo {

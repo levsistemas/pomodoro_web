@@ -1,4 +1,4 @@
-import { BTN_RESTART, BTN_START, BTN_STOP, CRONOMETRO, CRONOMETRO_ON, STATISTICS, hs, min, seg, myWorker, startTimer } from "./cronometro.js"
+import { BTN_RESTART, BTN_START, BTN_STOP, CRONOMETRO, CRONOMETRO_ON, STATISTICS, hs, min, seg, myWorker, startTimer, TIMER, theCronometro } from "./cronometro.js"
 
 const TIMER_T = document.getElementById('timer_t')
 const STATISTIC_TIMER = document.getElementById('stadistic_timer')
@@ -33,6 +33,7 @@ let seguimiento = 0
 let mins = 0
 let secs = 0
 let INTERVALO_T
+let interval_icons = 0
 let HORAS_T
 let MINUTOS_T
 let SEGUNDOS_T
@@ -46,7 +47,8 @@ let statistics_clock_seg = 0
 let multi_worker = false
 let worker_id = 0
 let timeleft_t = 0
-
+let ULTIMO_OBJETO_TEMPORIZADOR_INDICE
+let ULTIMO_OBJETO_TEMPORIZADOR_TASK
 
 function temporizadorStartTimer() {
     HORAS_T = parseInt(document.getElementById('hs_t').value)
@@ -63,12 +65,8 @@ function temporizadorStartTimer() {
 
     updateInterval()
 
-    // if (myWorker.worker) myWorker.worker.terminate();
-
     myWorker.worker.onmessage = function (e) {
         const { id, type, timeLeft, timeElapsed1, finished, stopped } = e.data
-        // worker_id = parseInt(e.data.id.slice(e.data.id.length - 1))
-        // console.log(e.data)
         if (type === "pomodoro") {
             if (finished) {
                 console.log("Pomodoro terminado")
@@ -76,11 +74,8 @@ function temporizadorStartTimer() {
                 startTimer()
             } else if (stopped) {
                 console.log("Pomodoro detenido")
-                // console.log(e.data)
-                // console.log(stopped)
             } else {
                 timeleft_t = timeLeft
-                icons()
                 mins = Math.floor(timeLeft / 60)
                 secs = timeLeft % 60
                 t_min = mins
@@ -95,7 +90,6 @@ function temporizadorStartTimer() {
             if (stopped) {
                 console.log("Estadisticas detenido")
             } else {
-                // console.log(e.data)
                 statistics_clock_hs = Math.floor(timeElapsed1 / 3600)
                 statistics_clock_min = Math.floor((timeElapsed1 % 3600) / 60)
                 statistics_clock_seg = timeElapsed1 % 60
@@ -121,9 +115,17 @@ BTN_START_T.addEventListener('click', () => {
     inicioPomodoro()
     CONTAINER2.removeAttribute('class')
     temporizadorStartTimer()
-    // pomodoro_on = true
     desactivarCronometro()
     activarTemporizador()
+    icons()
+    if (document.getElementById('min_t').value == "0") {
+        document.getElementById('min_t').value = 25
+    }
+    if (TIMER.innerHTML !== "00:00:00") {
+        TIMER.innerHTML = "00:00:00"
+        theCronometro()
+        // BTN_STOP.click()
+    }
 })
 
 BTN_RESTART_T.addEventListener('click', () => {
@@ -134,7 +136,6 @@ BTN_RESTART_T.addEventListener('click', () => {
         t_seg = 0
         t_segundos = 0
         CONTAINER2.removeAttribute('class')
-        // pomodoro_on = false
     } else {
         BTN_RESTART_T.disabled = true
         const LABEL_T = document.createElement('label')
@@ -210,7 +211,7 @@ BTN_ADD_TASK.addEventListener('click', () => {
 
         FINISHED.length = 0
 
-        TASKS_ELEMENTS.forEach((element, index) => {
+        TASKS_ELEMENTS.forEach(element => {
             element.addEventListener('dragend', (e) => {
                 e.target.classList.remove('dragging')
             })
@@ -264,7 +265,6 @@ BTN_ADD_TASK.addEventListener('click', () => {
 
                             if (element.children[0].textContent == 'Working') {
                                 document.getElementById('min_t').value = POMODORO
-                                // pomodoro_on = true
 
                                 if (CRONOMETRO_ON.cronometro_on == true) {
                                     BTN_STOP.click()
@@ -323,16 +323,17 @@ BTN_ADD_TASK.addEventListener('click', () => {
 
                         //EN ESTA LINEA DEBEMOS REALIZAR UN RECORRIDO DE TODAS LAS CARDS DE LAS TAREAS To Do
                         //PARA VOLVER A AGREGARLAS AL LOCALSTORAGE DE 'to_do' Y SOBREESCRIBIR NUEVAMENTE LOS VALORES YA QUE ESTAMOS EDITANDO UNA DE ELLAS
-                        document.getElementById('ToDo_tasks').childNodes.forEach((elemento, index) => {
-                            if (index > 0) {
-                                elemento.childNodes.forEach((elements, indexado) => {
-                                    if (indexado < 2) {
-                                        ToDo_TASK.push(elements.textContent)
-                                    }
-                                })
-                            }
-                        })
-                        localStorage.setItem('to_do', ToDo_TASK)
+
+                        // document.getElementById('ToDo_tasks').childNodes.forEach((elemento, index) => {
+                        //     if (index > 0) {
+                        //         elemento.childNodes.forEach((elements, indexado) => {
+                        //             if (indexado < 2) {
+                        //                 ToDo_TASK.push(elements.textContent)
+                        //             }
+                        //         })
+                        //     }
+                        // })
+                        // localStorage.setItem('to_do', ToDo_TASK)
                         comboToDo()
 
                         if (document.getElementById('working').childNodes[5]) {
@@ -471,78 +472,80 @@ function cafeIntermitente() {
 let _icons = false
 
 function icons() {
-    if (_icons == false) {
-        async function loadImages(urls) {
-            const promises = urls.map((url, index) => {
-                return new Promise((resolve) => {
-                    const img = new Image();
-                    img.src = url;
-                    img.onload = () => {
-                        CONTAINER2.appendChild(img)
-                        if (img.src.includes('picar')) {
-                            img.setAttribute('id', 'picar')
-                            img.setAttribute('alt', 'A PICAR CODIGO')
-                            img.style.position = "absolute"
-                            img.style.top = 0
-                            img.style.left = 0
-                            img.style.zIndex = 1
-                        }
+    interval_icons = setInterval(() => {
+        if (_icons == false) {
+            async function loadImages(urls) {
+                const promises = urls.map((url, index) => {
+                    return new Promise((resolve) => {
+                        const img = new Image();
+                        img.src = url;
+                        img.onload = () => {
+                            CONTAINER2.appendChild(img)
+                            if (img.src.includes('picar')) {
+                                img.setAttribute('id', 'picar')
+                                img.setAttribute('alt', 'A PICAR CODIGO')
+                                img.style.position = "absolute"
+                                img.style.top = 0
+                                img.style.left = 0
+                                img.style.zIndex = 1
+                            }
 
-                        if (img.src.includes('metal')) {
-                            img.setAttribute('id', 'metal')
-                            img.setAttribute('alt', 'MODO METAL')
-                            img.style.position = "absolute"
-                            img.style.top = 0
-                            img.style.left = CONTAINER2.offsetWidth - img.width + 'px'
-                            img.style.zIndex = 1
-                        }
+                            if (img.src.includes('metal')) {
+                                img.setAttribute('id', 'metal')
+                                img.setAttribute('alt', 'MODO METAL')
+                                img.style.position = "absolute"
+                                img.style.top = 0
+                                img.style.left = CONTAINER2.offsetWidth - img.width + 'px'
+                                img.style.zIndex = 1
+                            }
 
-                        if (img.src.includes('batman')) {
-                            img.setAttribute('id', 'batman')
-                            img.setAttribute('alt', 'BATMAAAAAAAAAAN')
-                            img.style.position = "absolute"
-                            img.style.top = CONTAINER2.offsetHeight - img.height + 'px'
-                            img.style.left = 0
-                            img.style.zIndex = 1
+                            if (img.src.includes('batman')) {
+                                img.setAttribute('id', 'batman')
+                                img.setAttribute('alt', 'BATMAAAAAAAAAAN')
+                                img.style.position = "absolute"
+                                img.style.top = CONTAINER2.offsetHeight - img.height + 'px'
+                                img.style.left = 0
+                                img.style.zIndex = 1
+                            }
+                            resolve({ url, width: img.offsetWidth, height: img.offsetHeight })
                         }
-                        resolve({ url, width: img.offsetWidth, height: img.offsetHeight })
-                    }
+                    })
+                })
+                return Promise.all(promises);
+            }
+            const urls = ['./img/a_picar.webp', './img/m_batman.webp', './img/m_metal.webp']
+
+            loadImages(urls).then((images) => {
+                images.forEach((img, index) => {
                 })
             })
-            return Promise.all(promises);
+            _icons = true
         }
-        const urls = ['./img/a_picar.webp', './img/m_batman.webp', './img/m_metal.webp']
 
-        loadImages(urls).then((images) => {
-            images.forEach((img, index) => {
-            })
-        })
-        _icons = true
-    }
-
-    if (document.getElementById('picar')) {
-        if (document.getElementById('picar').style.display == 'none') {
-            document.getElementById('picar').style.display = 'flex'
-        } else {
-            document.getElementById('picar').style.display = 'none'
+        if (document.getElementById('picar')) {
+            if (document.getElementById('picar').style.display == 'none') {
+                document.getElementById('picar').style.display = 'flex'
+            } else {
+                document.getElementById('picar').style.display = 'none'
+            }
         }
-    }
 
-    if (document.getElementById('batman')) {
-        if (document.getElementById('batman').style.display == 'none') {
-            document.getElementById('batman').style.display = 'flex'
-        } else {
-            document.getElementById('batman').style.display = 'none'
+        if (document.getElementById('batman')) {
+            if (document.getElementById('batman').style.display == 'none') {
+                document.getElementById('batman').style.display = 'flex'
+            } else {
+                document.getElementById('batman').style.display = 'none'
+            }
         }
-    }
 
-    if (document.getElementById('metal')) {
-        if (document.getElementById('metal').style.display == 'none') {
-            document.getElementById('metal').style.display = 'flex'
-        } else {
-            document.getElementById('metal').style.display = 'none'
+        if (document.getElementById('metal')) {
+            if (document.getElementById('metal').style.display == 'none') {
+                document.getElementById('metal').style.display = 'flex'
+            } else {
+                document.getElementById('metal').style.display = 'none'
+            }
         }
-    }
+    }, 1000)
 }
 
 async function elCafe(url) {
@@ -558,10 +561,9 @@ async function elCafe(url) {
 }
 
 function elPomodoro() {
-    // pomodoro_on = true
     if (t_min < 45 && t_min >= 10) {
         CONTAINER2.removeAttribute('class')
-        CONTAINER2.classList.add('inicio_temporizador')
+        CONTAINER2.classList.add('twentifive_temporizador')
     }
 
     if (t_min < 10 && t_min > 5) {
@@ -577,9 +579,6 @@ function elPomodoro() {
     if (t_hs === 0 && t_min === 0 && t_seg === 0) {
         seguimiento++
         TIMER_T.textContent = `${t_hs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-        // pomodoro_on = false
-        // BTN_START_T.disabled = false
-        // BTN_STOP_T.disabled = true
         const CONTAINER2 = document.getElementById('container2')
         const DIV = document.createElement('div')
         const H1 = document.createElement('h1')
@@ -597,6 +596,8 @@ function elPomodoro() {
         CONTAINER2.appendChild(DIV)
         CONTAINER2.appendChild(H1)
         DIV.appendChild(H2)
+        clearInterval(interval_icons)
+
         function eliminarResultado() {
             const CUENTA_FINAL = document.getElementById('the_end')
             CUENTA_FINAL.remove()
@@ -622,24 +623,41 @@ function elPomodoro() {
             clearInterval(ON)
             clearInterval(OFF)
             CONTAINER2.removeAttribute('class')
-            if(INTERVALO_T !== 1000){
+            if (INTERVALO_T !== 1000) {
                 document.getElementById('interval_t').value = 1000
             }
+            deleteIcons()
         })
 
-        // console.log('inicio cronometro', CRONOMETRO_ON.cronometro_on)
         TEMPORIZADOR.push(`${HORAS_T.toString().padStart(2, '0')}:${MINUTOS_T.toString().padStart(2, '0')}:${SEGUNDOS_T.toString().padStart(2, '0')}`)
         arrastre = false
 
-        const ULTIMO_OBJETO_TEMPORIZADOR_INDICE = document.querySelectorAll('.tareas')[1].children[document.querySelectorAll('.tareas')[1].children.length - 1].children[0].innerHTML
-        const ULTIMO_OBJETO_TEMPORIZADOR_TASK = document.querySelectorAll('.tareas')[1].children[document.querySelectorAll('.tareas')[1].children.length - 1].children[1].innerHTML
-        const L = document.createElement('label')
+        statisticsRec()
+    }
+}
+
+function statisticsRec() {
+    const L = document.createElement('label')
+
+    if (document.querySelectorAll('.tareas')[1].children[document.querySelectorAll('.tareas')[1].children.length - 1].children[0]) {
+        ULTIMO_OBJETO_TEMPORIZADOR_INDICE = document.querySelectorAll('.tareas')[1].children[document.querySelectorAll('.tareas')[1].children.length - 1].children[0].innerHTML
+    }
+
+    if (document.querySelectorAll('.tareas')[1].children[document.querySelectorAll('.tareas')[1].children.length - 1].children[0]) {
+        ULTIMO_OBJETO_TEMPORIZADOR_TASK = document.querySelectorAll('.tareas')[1].children[document.querySelectorAll('.tareas')[1].children.length - 1].children[1].innerHTML
+    }
+
+    if (ULTIMO_OBJETO_TEMPORIZADOR_INDICE !== undefined && ULTIMO_OBJETO_TEMPORIZADOR_TASK !== undefined) {
         L.innerHTML = `${ULTIMO_OBJETO_TEMPORIZADOR_INDICE} - ${ULTIMO_OBJETO_TEMPORIZADOR_TASK} - TEMPORIZADOR: ${HORAS_T.toString().padStart(2, '0')}:${MINUTOS_T.toString().padStart(2, '0')}:${SEGUNDOS_T.toString().padStart(2, '0')}`
         STATISTICS.push(`${ULTIMO_OBJETO_TEMPORIZADOR_INDICE} - ${ULTIMO_OBJETO_TEMPORIZADOR_TASK} - TEMPORIZADOR: ${HORAS_T.toString().padStart(2, '0')}:${MINUTOS_T.toString().padStart(2, '0')}:${SEGUNDOS_T.toString().padStart(2, '0')}`)
         document.getElementsByClassName('stadistic')[0].appendChild(L)
-        // console.log(STATISTICS)
-        localStorage.setItem('TEMPORIZADOR', TEMPORIZADOR)
+    } else {
+        document.getElementById('hs_t')
+        L.innerHTML = `TEMPORIZADOR: ${document.getElementById('hs_t').value.toString().padStart(2, '0')}:${document.getElementById('min_t').value.toString().padStart(2, '0')}:${document.getElementById('seg_t').value.toString().padStart(2, '0')}`
+        STATISTICS.push(`TEMPORIZADOR: ${document.getElementById('hs_t').value.toString().padStart(2, '0')}:${document.getElementById('min_t').value.toString().padStart(2, '0')}:${document.getElementById('seg_t').value.toString().padStart(2, '0')}`)
+        document.getElementsByClassName('stadistic')[0].appendChild(L)
     }
+    localStorage.setItem('TEMPORIZADOR', TEMPORIZADOR)
 }
 
 function desactivarCronometro() {
@@ -703,12 +721,18 @@ function startStatistics(id) {
 
 function stopPomodoro(id) {
     myWorker.worker.postMessage({ action: "stop", id, type: "pomodoro" })
+    clearInterval(interval_icons)
 }
 
 BTN_STOP_T.addEventListener('click', () => {
     pausaPomodoro()
-    // pomodoro_on = false
     stopPomodoro('pomodoro' + worker_id)
 })
 
-export { TIME_DATE }
+function deleteIcons() {
+    document.getElementById('picar').style.display = 'none'
+    document.getElementById('batman').style.display = 'none'
+    document.getElementById('metal').style.display = 'none'
+}
+
+export { TIME_DATE, activarTemporizador, ALARMA, pausaPomodoro }

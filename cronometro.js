@@ -1,3 +1,5 @@
+import { activarTemporizador, ALARMA, pausaPomodoro } from "./temporizador.js"
+
 const TIMER = document.getElementById('timer')
 const BTN_START = document.getElementById('start')
 const BTN_STOP = document.getElementById('stop')
@@ -25,8 +27,9 @@ let timer_c = 0
 let statistics_clock_hs = 0
 let statistics_clock_min = 0
 let statistics_clock_seg = 0
+let rounds = 0
 
-myWorker.worker = new Worker("multi_worker.js")
+myWorker.worker = new Worker("workers.js")
 
 BTN_STOP.disabled = true
 
@@ -70,11 +73,23 @@ function startTimer() {
                 console.log('Cronometro detenido')
             } else {
                 timer_c = timeElapsed
-                if (timer_c == 300) {
-                    CONTAINER1.classList.add('five_temporizador')
-                    const ALARMA = document.getElementById('alarm-sound')
-                    ALARMA.play()
+                
+                if(rounds==4) {
+                    if (timer_c === 900) {
+                        CONTAINER1.classList.add('long_break')
+                        playAlarm()
+                        console.log('Vueltas de Pomodoro:', rounds)
+                        rounds=0
+                    }
+                } else {
+                    if (timer_c==300) {
+                        CONTAINER1.classList.add('five_temporizador')
+                        playAlarm()
+                        rounds++
+                        console.log('Vueltas de Pomodoro:', rounds)
+                    }
                 }
+
                 hs = Math.floor(timer_c / 3600);
                 min = Math.floor((timer_c % 3600) / 60)
                 seg = timer_c % 60
@@ -104,10 +119,14 @@ BTN_STOP.addEventListener('click', () => {
 })
 
 CONTAINER1.addEventListener('mousemove', () => {
-    if(document.getElementById('alarm-sound').currentTime!==0) {
-        document.getElementById('alarm-sound').pause();
-        document.getElementById('alarm-sound').currentTime=0
+    if(ALARMA.currentTime!==0) {
+        stopAlarm();
         CONTAINER1.removeAttribute('class')
+        if(document.getElementById('interval').value!==1000){
+            document.getElementById('interval').value=1000;
+        }
+        activarTemporizador();
+        pausaPomodoro();
     }
 })
 
@@ -135,14 +154,11 @@ BTN_RESTART.addEventListener('click', () => {
 })
 
 function startCronometro(id) {
-    // console.log('intentando iniciar funcion cronometro', id)
-    myWorker.worker.postMessage({ action: "start", id, type: "cronometro" })
+    myWorker.worker.postMessage({ action: "start", id, type: "cronometro", update: "interval", interval: parseInt(document.getElementById('interval').value) })
 }
 
 function stopCronometro(id) {
-    // console.log('intentando detener funcion cronometro', id)
     if (myWorker.worker) {
-        // console.log(myWorker.worker)
         myWorker.worker.postMessage({ action: "stop", id, type: "cronometro" })
     }
 }
@@ -165,7 +181,15 @@ function theCronometro() {
     L.innerHTML = `CRONOMETRO: ${hs.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`
     document.getElementsByClassName('stadistic')[0].appendChild(L)
     STATISTICS.push(`CRONOMETRO: ${hs.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`)
-    // console.log(STATISTICS)
 }
 
-export { startTimer, CRONOMETRO, CRONOMETRO_ON, BTN_START, BTN_STOP, BTN_RESTART, STATISTICS, hs, min, seg, myWorker }
+function playAlarm() {
+    ALARMA.play()
+}
+
+function stopAlarm() {
+    ALARMA.pause()
+    ALARMA.currentTime = 0
+}
+
+export { startTimer, CRONOMETRO, CRONOMETRO_ON, BTN_START, BTN_STOP, BTN_RESTART, STATISTICS, hs, min, seg, myWorker, TIMER, theCronometro }
