@@ -1,17 +1,22 @@
-const DARKMODE = document.getElementById('darkmode')
-const PRINCIPAL = document.querySelector('#principal')
-const SELECT = document.getElementById('select')
-const INPUT_BUTTON = document.querySelectorAll('input[type="button"]')
-const INPUT_NUMBER = document.querySelectorAll('input[type="number"]')
-const LABELS = document.querySelectorAll('#header label')
-const STADISTICS = document.getElementById('stadistics')
-const TASKS = document.getElementById('tasks')
+import { TIME_DATE } from "./temporizador.js"
+
+const DARKMODE = document.getElementById('darkmode');
+const PRINCIPAL = document.querySelector('#principal');
+const SELECT = document.getElementById('select');
+const INPUT_BUTTON = document.querySelectorAll('input[type="button"]');
+const INPUT_NUMBER = document.querySelectorAll('input[type="number"]');
+const LABELS = document.querySelectorAll('#header label');
+const STADISTICS = document.getElementById('stadistics');
+const TASKS = document.getElementById('tasks');
+const DARK_GREY = 'rgb(56, 53, 53)'
+
 SELECT.addEventListener('change', (event) => {
     const SELECTED_COLOR = event.target.value
-    if (SELECT.value == 'yellow' || SELECT.value == 'white') {
+    if (SELECT.value == 'yellow' || SELECT.value == 'white' || SELECT.value == 'lightblue' || SELECT.value == 'violet' || SELECT.value == 'lightgreen') {
         PRINCIPAL.style.color = SELECTED_COLOR
         STADISTICS.style.color = SELECTED_COLOR
         TASKS.style.color = SELECTED_COLOR
+        TIME_DATE.style.color = SELECTED_COLOR
         INPUT_BUTTON.forEach(boton => {
             boton.style.color = 'black'
         })
@@ -21,6 +26,7 @@ SELECT.addEventListener('change', (event) => {
         document.getElementsByClassName('stadistic')[0].style.color = 'black'
     } else {
         if (SELECT.value == SELECTED_COLOR) {
+            TIME_DATE.style.color = SELECTED_COLOR
             PRINCIPAL.style.color = SELECTED_COLOR
             STADISTICS.style.color = SELECTED_COLOR
             TASKS.style.color = SELECTED_COLOR
@@ -33,10 +39,11 @@ SELECT.addEventListener('change', (event) => {
         }
     }
 })
+
 DARKMODE.addEventListener('click', () => {
     if (DARKMODE.checked == true) {
-        PRINCIPAL.style.backgroundColor = 'rgb(56, 53, 53)'
-        document.body.style.backgroundColor = 'rgb(56, 53, 53)'
+        PRINCIPAL.style.backgroundColor = DARK_GREY
+        document.body.style.backgroundColor = DARK_GREY
         LABELS.forEach(label => {
             label.style.color = 'white'
         })
