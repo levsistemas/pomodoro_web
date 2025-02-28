@@ -4,11 +4,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POMODORO</title>
+    <title>Pomodoro</title>
     <link rel="stylesheet" href="./estilo.css">
+    <link rel="shortcut icon" href="./img/trabajar.png" type="image/x-icon">
 </head>
 
 <body>
+    <h1 id="time_date"></h1>
     <div id="header">
         <div>
             <input type="checkbox" name="darkmode" id="darkmode">
@@ -18,7 +20,7 @@
                 <select name="opciones" id="select">
                     <option name="opciones" value="black" selected>Negro</option>
                     <option name="opciones" value="violet">Violeta</option>
-                    <option name="opciones" value="green">Verde</option>
+                    <option name="opciones" value="lightgreen">Verde</option>
                     <option name="opciones" value="lightblue">Celeste</option>
                     <option name="opciones" value="white">Blanco</option>
                     <option name="opciones" value="yellow">Amarillo</option>
@@ -112,7 +114,7 @@
 
     <section>
         <div id="stadistics">
-            <h1>Estadísticas</h1>
+            <h1>ESTADÍSTICAS</h1>
             <div class="stadistic"></div>
             <h1 id="stadistic_timer" class="tiempo">00:00:00</h1>
         </div>

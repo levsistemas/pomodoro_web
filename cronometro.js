@@ -1,32 +1,40 @@
+import { activarTemporizador, ALARMA, pausaPomodoro } from "./temporizador.js"
+
 const TIMER = document.getElementById('timer')
 const BTN_START = document.getElementById('start')
 const BTN_STOP = document.getElementById('stop')
 const BTN_RESTART = document.getElementById('restart')
-const CHK_SAVE_TASKS = document.getElementById('save_tasks') 
-const CRONOMETRO_ON = { cronometro_on:false }
+const CHK_SAVE_TASKS = document.getElementById('save_tasks')
+const CRONOMETRO_ON = { cronometro_on: false }
 const CRONOMETRO = []
-const STADISTICS = []
+const STATISTICS = []
+const STATISTIC_TIMER = document.getElementById('stadistic_timer')
+const CONTAINER1 = document.getElementById('container1')
 
 let hs
 let min
 let seg
 let interval = null
 let segundos = 0
-let worker = {
-    worker:0,
-    worker2:0
+let myWorker = {
+    worker: 0
 }
+let cronometro = false
+let worker_id = 0
+let id_worker = 0
+let timer_c = 0
 
-const ESTADISTICAS = ((...name) => {
-    return name.map((valor, index) => ({ index, valor }))
-})
+let statistics_clock_hs = 0
+let statistics_clock_min = 0
+let statistics_clock_seg = 0
+let rounds = 0
 
-// console.log(ESTADISTICAS('Leandro','Eduardo','Vega'))
+myWorker.worker = new Worker("workers.js")
+
 BTN_STOP.disabled = true
 
-
 CHK_SAVE_TASKS.addEventListener('click', () => {
-    if(CHK_SAVE_TASKS.checked==true){
+    if (CHK_SAVE_TASKS.checked == true) {
         localStorage.getItem('CRONOMETRO')
         localStorage.getItem('FINISHED')
         localStorage.getItem('TEMPORIZADOR')
@@ -42,14 +50,9 @@ CHK_SAVE_TASKS.addEventListener('click', () => {
 })
 
 function startTimer() {
-
-    if (worker.worker) worker.worker.terminate();
-
-    worker.worker = new Worker("worker.js")
-
     CRONOMETRO_ON.cronometro_on = true
-    console.log('cronometro original, iniciando...', CRONOMETRO_ON.cronometro_on)
-    
+    // console.log('cronometro original, iniciando...', CRONOMETRO_ON.cronometro_on)
+
     const INTERVAL = parseInt(document.getElementById('interval').value)
     const HOURS = parseInt(document.getElementById('hs').value)
     const MINUTES = parseInt(document.getElementById('min').value)
@@ -59,107 +62,72 @@ function startTimer() {
         min = MINUTES
         seg = SECONDS
     }
-    interval = setInterval(() => {
-        console.log('Intervalo cronometro: ', interval)
-        segundos++
-        seg++
-        if (seg >= 60) {
-            seg = 0
-            min++
-            if (min >= 60) {
-                min = 0
-                hs++
-            }
-        }
-        if (hs > 0) {
-            losMinutos()
-            losSegundos()
-        } else {
-            losMinutos()
-            losSegundos()
-        }
 
-        function losMinutos() {
-            if (min > 59) {
-                hs++
-                min = 0
-            }
-            losSegundos()
-
-            if (hs <= 9) {
-                if (min >= 0 && min < 10) {
-                    if (seg <= 9) {
-                        TIMER.textContent = `0${hs}:0${min}:0${seg}`
-                    } else {
-                        TIMER.textContent = `0${hs}:0${min}:${seg}`
-                    }
-                }
-
-                if (min >= 10 && min < 60) {
-                    if (seg <= 9) {
-                        TIMER.textContent = `0${hs}:${min}:0${seg}`
-                    } else {
-                        TIMER.textContent = `0${hs}:${min}:${seg}`
-                    }
-                }
+    myWorker.worker.onmessage = function (e) {
+        const { id, type, timeElapsed, timeElapsed1, finished, stopped } = e.data
+        id_worker = id
+        if (type === "cronometro") {
+            if (finished) {
+                console.log('Cronometro en el final')
+            } else if (stopped) {
+                console.log('Cronometro detenido')
             } else {
-                if (min >= 0 && min < 10) {
-                    if (seg <= 9) {
-                        TIMER.textContent = `${hs}:0${min}:0${seg}`
-                    } else {
-                        TIMER.textContent = `${hs}:0${min}:${seg}`
+                timer_c = timeElapsed
+                
+                if(rounds==4) {
+                    if (timer_c === 900) {
+                        CONTAINER1.classList.add('long_break')
+                        playAlarm()
+                        console.log('Vueltas de Pomodoro:', rounds)
+                        rounds=0
+                    }
+                } else {
+                    if (timer_c==300) {
+                        CONTAINER1.classList.add('five_temporizador')
+                        playAlarm()
+                        rounds++
+                        console.log('Vueltas de Pomodoro:', rounds)
                     }
                 }
 
-                if (min >= 10 && min < 60) {
-                    if (seg <= 9) {
-                        TIMER.textContent = `${hs}:${min}:0${seg}`
-                    } else {
-                        TIMER.textContent = `${hs}:${min}:${seg}`
-                    }
-                }
+                hs = Math.floor(timer_c / 3600);
+                min = Math.floor((timer_c % 3600) / 60)
+                seg = timer_c % 60
+                TIMER.textContent = `${hs.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`
             }
         }
 
-        function losSegundos() {
-            if (seg > 59) {
-                seg = 0
-                min++
-            }
+        if (type === "statistic") {
+            statistics_clock_hs = Math.floor(timeElapsed1 / 3600)
+            statistics_clock_min = Math.floor((timeElapsed1 % 3600) / 60)
+            statistics_clock_seg = timeElapsed1 % 60
+            STATISTIC_TIMER.textContent = `${statistics_clock_hs.toString().padStart(2, '0')}:${statistics_clock_min.toString().padStart(2, '0')}:${statistics_clock_seg.toString().padStart(2, '0')}`
         }
-    }, INTERVAL)
+    }
 }
 
 BTN_START.addEventListener('click', () => {
-    if (BTN_START.disabled == false) {
-        BTN_START.disabled = true
-        BTN_STOP.disabled = false
-        if (seg == 0 && min == 0 && hs == 0) {
-            segundos++
-        }
-        startTimer()
-    } else {
-        BTN_START.disabled = false
-    }
+    startButton()
+    startTimer()
+    startCronometro("cronometro1")
 })
 
 BTN_STOP.addEventListener('click', () => {
-    if (BTN_START.disabled == true) {
-        BTN_START.disabled = false
-        BTN_STOP.disabled = true
+    pauseButton()
+    stopCronometro("cronometro1")
+    theCronometro()
+})
+
+CONTAINER1.addEventListener('mousemove', () => {
+    if(ALARMA.currentTime!==0) {
+        stopAlarm();
+        CONTAINER1.removeAttribute('class')
+        if(document.getElementById('interval').value!==1000){
+            document.getElementById('interval').value=1000;
+        }
+        activarTemporizador();
+        pausaPomodoro();
     }
-    CRONOMETRO.push(`${hs.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`)
-    // console.log(CRONOMETRO)
-    localStorage.setItem('CRONOMETRO', CRONOMETRO)
-    CRONOMETRO_ON.cronometro_on = false
-    clearInterval(interval)
-    const L = document.createElement('label')
-    L.innerHTML = `CRONOMETRO: ${hs.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`
-    document.getElementsByClassName('stadistic')[0].appendChild(L)
-    STADISTICS.push(`CRONOMETRO: ${hs.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`)
-    // console.log(ESTADISTICAS(`CRONOMETRO: ${hs.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`))
-    console.log(STADISTICS)
-    // console.log(ESTADISTICAS)
 })
 
 BTN_RESTART.addEventListener('click', () => {
@@ -185,4 +153,43 @@ BTN_RESTART.addEventListener('click', () => {
     }
 })
 
-export { startTimer, CRONOMETRO, CRONOMETRO_ON, BTN_START, BTN_STOP, BTN_RESTART, STADISTICS, ESTADISTICAS, hs, min, seg, worker }
+function startCronometro(id) {
+    myWorker.worker.postMessage({ action: "start", id, type: "cronometro", update: "interval", interval: parseInt(document.getElementById('interval').value) })
+}
+
+function stopCronometro(id) {
+    if (myWorker.worker) {
+        myWorker.worker.postMessage({ action: "stop", id, type: "cronometro" })
+    }
+}
+
+function startButton() {
+    BTN_START.disabled = true
+    BTN_STOP.disabled = false
+}
+
+function pauseButton() {
+    BTN_STOP.disabled = true
+    BTN_START.disabled = false
+}
+
+function theCronometro() {
+    CRONOMETRO.push(`${hs.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`)
+    localStorage.setItem('CRONOMETRO', CRONOMETRO)
+    CRONOMETRO_ON.cronometro_on = false
+    const L = document.createElement('label')
+    L.innerHTML = `CRONOMETRO: ${hs.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`
+    document.getElementsByClassName('stadistic')[0].appendChild(L)
+    STATISTICS.push(`CRONOMETRO: ${hs.toString().padStart(2, '0')}:${min.toString().padStart(2, '0')}:${seg.toString().padStart(2, '0')}`)
+}
+
+function playAlarm() {
+    ALARMA.play()
+}
+
+function stopAlarm() {
+    ALARMA.pause()
+    ALARMA.currentTime = 0
+}
+
+export { startTimer, CRONOMETRO, CRONOMETRO_ON, BTN_START, BTN_STOP, BTN_RESTART, STATISTICS, hs, min, seg, myWorker, TIMER, theCronometro }

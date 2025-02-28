@@ -1,7 +1,7 @@
-import { BTN_RESTART, BTN_START, BTN_STOP, CRONOMETRO, CRONOMETRO_ON, STADISTICS, ESTADISTICAS, hs, min, seg, worker } from "./cronometro.js"
+import { BTN_RESTART, BTN_START, BTN_STOP, CRONOMETRO, CRONOMETRO_ON, STATISTICS, hs, min, seg, myWorker, startTimer, TIMER, theCronometro } from "./cronometro.js"
 
 const TIMER_T = document.getElementById('timer_t')
-const STADISTIC_TIMER = document.getElementById('stadistic_timer')
+const STATISTIC_TIMER = document.getElementById('stadistic_timer')
 
 const BTN_START_T = document.getElementById('start_t')
 const BTN_STOP_T = document.getElementById('stop_t')
@@ -11,6 +11,8 @@ const WRITE_TASK = document.getElementById('write_task')
 const BTN_ADD_TASK = document.getElementById('btn_add_task')
 const TODO_TASKS = document.getElementById('ToDo_tasks')
 const ALARMA = document.getElementById('alarm-sound')
+const TIME_DATE = document.getElementById('time_date')
+const POMODORO = 25
 const TEMPORIZADOR = []
 const ToDo_TASK = []
 const WORKING = []
@@ -20,19 +22,18 @@ const HIDRATE_2 = []
 
 let todo_tasks = 0
 let arrastre = false
-let pomodoro_on = false
 BTN_STOP_T.disabled = true
 BTN_ADD_TASK.disabled = true
 
 let t_hs
 let t_min
 let t_seg
-let t_interval = null
 let t_segundos = 0
 let seguimiento = 0
 let mins = 0
 let secs = 0
 let INTERVALO_T
+let interval_icons = 0
 let HORAS_T
 let MINUTOS_T
 let SEGUNDOS_T
@@ -40,14 +41,16 @@ let result
 let ON
 let OFF
 let COFFEE
-let estadisticas
-let stadistics_mins
-let stadistics_secs
-let stadistics_clock_min
-let stadistics_clock_seg
+let statistics_clock_hs = 0
+let statistics_clock_min = 0
+let statistics_clock_seg = 0
+let multi_worker = false
+let worker_id = 0
+let timeleft_t = 0
+let ULTIMO_OBJETO_TEMPORIZADOR_INDICE
+let ULTIMO_OBJETO_TEMPORIZADOR_TASK
 
 function temporizadorStartTimer() {
-    INTERVALO_T = parseInt(document.getElementById('interval_t').value)
     HORAS_T = parseInt(document.getElementById('hs_t').value)
     MINUTOS_T = parseInt(document.getElementById('min_t').value)
     SEGUNDOS_T = parseInt(document.getElementById('seg_t').value)
@@ -60,50 +63,69 @@ function temporizadorStartTimer() {
 
     t_segundos = t_min * 60 + t_seg
 
-    if (worker.worker) worker.worker.terminate();
-    worker.worker = new Worker("worker.js")
-    worker.worker.postMessage({ action: "start", time: t_segundos })
+    updateInterval()
 
-    worker.worker.onmessage = function (e) {
-        if (e.data.finished) {
-            theWorker()
-        } else {
-            icons()
-            mins = Math.floor(e.data.timeLeft / 60)
-            secs = e.data.timeLeft % 60
-            t_min = mins
-            t_seg = secs
-            TIMER_T.textContent = `${t_hs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-            elPomodoro()
+    myWorker.worker.onmessage = function (e) {
+        const { id, type, timeLeft, timeElapsed1, finished, stopped } = e.data
+        if (type === "pomodoro") {
+            if (finished) {
+                console.log("Pomodoro terminado")
+                theWorker()
+                startTimer()
+            } else if (stopped) {
+                console.log("Pomodoro detenido")
+            } else {
+                timeleft_t = timeLeft
+                mins = Math.floor(timeLeft / 60)
+                secs = timeLeft % 60
+                t_min = mins
+                t_seg = secs
+                if (!isNaN(mins) && !isNaN(secs)) {
+                    TIMER_T.textContent = `${t_hs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+                    elPomodoro()
+                }
+            }
         }
+        if (type === "statistic") {
+            if (stopped) {
+                console.log("Estadisticas detenido")
+            } else {
+                statistics_clock_hs = Math.floor(timeElapsed1 / 3600)
+                statistics_clock_min = Math.floor((timeElapsed1 % 3600) / 60)
+                statistics_clock_seg = timeElapsed1 % 60
+                STATISTIC_TIMER.textContent = `${statistics_clock_hs.toString().padStart(2, '0')}:${statistics_clock_min.toString().padStart(2, '0')}:${statistics_clock_seg.toString().padStart(2, '0')}`
+            }
+        }
+    }
+    if (TIMER_T.textContent == `00:00:00`) {
+        startPomodoro("pomodoro" + worker_id, POMODORO * 60)
+    } else {
+        startPomodoro("pomodoro" + worker_id, timeleft_t)
+    }
+    if (multi_worker == false) {
+        startStatistics("statistic2")
     }
 }
 
+function updateInterval() {
+    INTERVALO_T = parseInt(document.getElementById('interval_t').value)
+}
+
 BTN_START_T.addEventListener('click', () => {
+    inicioPomodoro()
     CONTAINER2.removeAttribute('class')
-    if (BTN_START_T.disabled == false) {
-        BTN_START_T.disabled = true
-        BTN_STOP_T.disabled = false
-        temporizadorStartTimer()
-    } else {
-        BTN_START_T.disabled = false
-        pomodoro_on = true
-    }
+    temporizadorStartTimer()
     desactivarCronometro()
     activarTemporizador()
-})
-
-BTN_STOP_T.addEventListener('click', () => {
-    if (BTN_START_T.disabled == true) {
-        BTN_START_T.disabled = false
-        BTN_STOP_T.disabled = true
+    icons()
+    if (document.getElementById('min_t').value == "0") {
+        document.getElementById('min_t').value = 25
     }
-    if (worker.worker) {
-        worker.worker.postMessage({ action: "pause" });
-        worker.worker.terminate();
+    if (TIMER.innerHTML !== "00:00:00") {
+        TIMER.innerHTML = "00:00:00"
+        theCronometro()
+        // BTN_STOP.click()
     }
-    // clearInterval(t_interval)
-    pomodoro_on = false
 })
 
 BTN_RESTART_T.addEventListener('click', () => {
@@ -114,7 +136,6 @@ BTN_RESTART_T.addEventListener('click', () => {
         t_seg = 0
         t_segundos = 0
         CONTAINER2.removeAttribute('class')
-        pomodoro_on = false
     } else {
         BTN_RESTART_T.disabled = true
         const LABEL_T = document.createElement('label')
@@ -190,7 +211,7 @@ BTN_ADD_TASK.addEventListener('click', () => {
 
         FINISHED.length = 0
 
-        TASKS_ELEMENTS.forEach((element, index) => {
+        TASKS_ELEMENTS.forEach(element => {
             element.addEventListener('dragend', (e) => {
                 e.target.classList.remove('dragging')
             })
@@ -223,13 +244,14 @@ BTN_ADD_TASK.addEventListener('click', () => {
                         document.body.appendChild(H1)
                         H1.style.position = 'absolute'
                         H1.style.backgroundColor = 'blue'
+                        H1.style.color = 'white'
                         H1.style.top = "50%"
                         H1.style.left = "25%"
                         H1.style.zIndex = 1
                         function deleteWarning() {
                             H1.remove()
                         }
-                        setTimeout(deleteWarning, 5000)
+                        setTimeout(deleteWarning, 6000)
                     } else {
                         e.preventDefault()
                         const DRAG_ELEMENT_NUMBER = e.dataTransfer.getData('text/plain')
@@ -242,41 +264,20 @@ BTN_ADD_TASK.addEventListener('click', () => {
                             comboFinished()
 
                             if (element.children[0].textContent == 'Working') {
-                                document.getElementById('min_t').value = 1
-                                pomodoro_on = true
+                                document.getElementById('min_t').value = POMODORO
 
                                 if (CRONOMETRO_ON.cronometro_on == true) {
                                     BTN_STOP.click()
                                     BTN_RESTART.click()
                                     CRONOMETRO_ON.cronometro_on = false
                                 }
-
+                                pausaPomodoro()
                                 BTN_START_T.click()
+                                BTN_STOP.click()
                             }
 
                             if (element.children[0].textContent == 'Finished') {
                                 arrastre = false
-                            }
-
-                            workerStadistics()
-                            function workerStadistics() {
-                                if (worker.worker2) worker.worker.terminate();
-                                worker.worker2 = new Worker("worker.js")
-                                worker.worker2.postMessage({ action: "start2", time: estadisticas })
-
-                                worker.worker2.onmessage = function (e) {
-                                    if (e.data.finished) {
-                                        console.log('tiempo terminado')
-                                    } else {
-                                        // icons()
-                                        stadistics_mins = Math.floor(e.data.timeLeft * 60)
-                                        stadistics_secs = e.data.timeLeft
-                                        stadistics_clock_min = stadistics_mins
-                                        stadistics_clock_seg = stadistics_secs
-                                        STADISTIC_TIMER.textContent = `${t_hs.toString().padStart(2, '0')}:${stadistics_clock_min.toString().padStart(2, '0')}:${stadistics_clock_seg.toString().padStart(2, '0')}`
-                                        // elPomodoro()
-                                    }
-                                }
                             }
                         }
                     }
@@ -322,16 +323,17 @@ BTN_ADD_TASK.addEventListener('click', () => {
 
                         //EN ESTA LINEA DEBEMOS REALIZAR UN RECORRIDO DE TODAS LAS CARDS DE LAS TAREAS To Do
                         //PARA VOLVER A AGREGARLAS AL LOCALSTORAGE DE 'to_do' Y SOBREESCRIBIR NUEVAMENTE LOS VALORES YA QUE ESTAMOS EDITANDO UNA DE ELLAS
-                        document.getElementById('ToDo_tasks').childNodes.forEach((elemento, index) => {
-                            if (index > 0) {
-                                elemento.childNodes.forEach((elements, indexado) => {
-                                    if (indexado < 2) {
-                                        ToDo_TASK.push(elements.textContent)
-                                    }
-                                })
-                            }
-                        })
-                        localStorage.setItem('to_do', ToDo_TASK)
+
+                        // document.getElementById('ToDo_tasks').childNodes.forEach((elemento, index) => {
+                        //     if (index > 0) {
+                        //         elemento.childNodes.forEach((elements, indexado) => {
+                        //             if (indexado < 2) {
+                        //                 ToDo_TASK.push(elements.textContent)
+                        //             }
+                        //         })
+                        //     }
+                        // })
+                        // localStorage.setItem('to_do', ToDo_TASK)
                         comboToDo()
 
                         if (document.getElementById('working').childNodes[5]) {
@@ -409,22 +411,10 @@ function comboFinished() {
 }
 
 function theWorker() {
-    let fecha = Date()
-    let fecha_amiga
-    const FECHA = fecha.split(' ')
-    FECHA.map((date, index) => {
-        if(index < 5){
-            if(fecha_amiga !== undefined){
-                fecha_amiga = fecha_amiga + ' ' + date
-            } else {
-                fecha_amiga = date
-            }
-        }
-    })
-    console.log(fecha_amiga)
-    // console.log(Date())
-    worker.worker.terminate();
+    Date().slice(0, 24)
+    console.log(new Date().toLocaleString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false }))
     TIMER_T.textContent = `${t_hs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+    ALARMA.currentTime = 0
     ALARMA.play();
     document.getElementById('picar').style.display = 'none'
     document.getElementById('batman').style.display = 'none'
@@ -482,78 +472,80 @@ function cafeIntermitente() {
 let _icons = false
 
 function icons() {
-    if (_icons == false) {
-        async function loadImages(urls) {
-            const promises = urls.map((url, index) => {
-                return new Promise((resolve) => {
-                    const img = new Image();
-                    img.src = url;
-                    img.onload = () => {
-                        CONTAINER2.appendChild(img)
-                        if (img.src.includes('picar')) {
-                            img.setAttribute('id', 'picar')
-                            img.setAttribute('alt', 'A PICAR CODIGO')
-                            img.style.position = "absolute"
-                            img.style.top = 0
-                            img.style.left = 0
-                            img.style.zIndex = 1
-                        }
+    interval_icons = setInterval(() => {
+        if (_icons == false) {
+            async function loadImages(urls) {
+                const promises = urls.map((url, index) => {
+                    return new Promise((resolve) => {
+                        const img = new Image();
+                        img.src = url;
+                        img.onload = () => {
+                            CONTAINER2.appendChild(img)
+                            if (img.src.includes('picar')) {
+                                img.setAttribute('id', 'picar')
+                                img.setAttribute('alt', 'A PICAR CODIGO')
+                                img.style.position = "absolute"
+                                img.style.top = 0
+                                img.style.left = 0
+                                img.style.zIndex = 1
+                            }
 
-                        if (img.src.includes('metal')) {
-                            img.setAttribute('id', 'metal')
-                            img.setAttribute('alt', 'MODO METAL')
-                            img.style.position = "absolute"
-                            img.style.top = 0
-                            img.style.left = CONTAINER2.offsetWidth - img.width + 'px'
-                            img.style.zIndex = 1
-                        }
+                            if (img.src.includes('metal')) {
+                                img.setAttribute('id', 'metal')
+                                img.setAttribute('alt', 'MODO METAL')
+                                img.style.position = "absolute"
+                                img.style.top = 0
+                                img.style.left = CONTAINER2.offsetWidth - img.width + 'px'
+                                img.style.zIndex = 1
+                            }
 
-                        if (img.src.includes('batman')) {
-                            img.setAttribute('id', 'batman')
-                            img.setAttribute('alt', 'BATMAAAAAAAAAAN')
-                            img.style.position = "absolute"
-                            img.style.top = CONTAINER2.offsetHeight - img.height + 'px'
-                            img.style.left = 0
-                            img.style.zIndex = 1
+                            if (img.src.includes('batman')) {
+                                img.setAttribute('id', 'batman')
+                                img.setAttribute('alt', 'BATMAAAAAAAAAAN')
+                                img.style.position = "absolute"
+                                img.style.top = CONTAINER2.offsetHeight - img.height + 'px'
+                                img.style.left = 0
+                                img.style.zIndex = 1
+                            }
+                            resolve({ url, width: img.offsetWidth, height: img.offsetHeight })
                         }
-                        resolve({ url, width: img.offsetWidth, height: img.offsetHeight })
-                    }
+                    })
+                })
+                return Promise.all(promises);
+            }
+            const urls = ['./img/a_picar.webp', './img/m_batman.webp', './img/m_metal.webp']
+
+            loadImages(urls).then((images) => {
+                images.forEach((img, index) => {
                 })
             })
-            return Promise.all(promises);
+            _icons = true
         }
-        const urls = ['./img/a_picar.webp', './img/m_batman.webp', './img/m_metal.webp']
 
-        loadImages(urls).then((images) => {
-            images.forEach((img, index) => {
-            })
-        })
-        _icons = true
-    }
-
-    if (document.getElementById('picar')) {
-        if (document.getElementById('picar').style.display == 'none') {
-            document.getElementById('picar').style.display = 'flex'
-        } else {
-            document.getElementById('picar').style.display = 'none'
+        if (document.getElementById('picar')) {
+            if (document.getElementById('picar').style.display == 'none') {
+                document.getElementById('picar').style.display = 'flex'
+            } else {
+                document.getElementById('picar').style.display = 'none'
+            }
         }
-    }
 
-    if (document.getElementById('batman')) {
-        if (document.getElementById('batman').style.display == 'none') {
-            document.getElementById('batman').style.display = 'flex'
-        } else {
-            document.getElementById('batman').style.display = 'none'
+        if (document.getElementById('batman')) {
+            if (document.getElementById('batman').style.display == 'none') {
+                document.getElementById('batman').style.display = 'flex'
+            } else {
+                document.getElementById('batman').style.display = 'none'
+            }
         }
-    }
 
-    if (document.getElementById('metal')) {
-        if (document.getElementById('metal').style.display == 'none') {
-            document.getElementById('metal').style.display = 'flex'
-        } else {
-            document.getElementById('metal').style.display = 'none'
+        if (document.getElementById('metal')) {
+            if (document.getElementById('metal').style.display == 'none') {
+                document.getElementById('metal').style.display = 'flex'
+            } else {
+                document.getElementById('metal').style.display = 'none'
+            }
         }
-    }
+    }, 1000)
 }
 
 async function elCafe(url) {
@@ -569,10 +561,9 @@ async function elCafe(url) {
 }
 
 function elPomodoro() {
-    pomodoro_on = true
     if (t_min < 45 && t_min >= 10) {
         CONTAINER2.removeAttribute('class')
-        CONTAINER2.classList.add('inicio_temporizador')
+        CONTAINER2.classList.add('twentifive_temporizador')
     }
 
     if (t_min < 10 && t_min > 5) {
@@ -588,9 +579,6 @@ function elPomodoro() {
     if (t_hs === 0 && t_min === 0 && t_seg === 0) {
         seguimiento++
         TIMER_T.textContent = `${t_hs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-        pomodoro_on = false
-        BTN_START_T.disabled = false
-        BTN_STOP_T.disabled = true
         const CONTAINER2 = document.getElementById('container2')
         const DIV = document.createElement('div')
         const H1 = document.createElement('h1')
@@ -608,6 +596,8 @@ function elPomodoro() {
         CONTAINER2.appendChild(DIV)
         CONTAINER2.appendChild(H1)
         DIV.appendChild(H2)
+        clearInterval(interval_icons)
+
         function eliminarResultado() {
             const CUENTA_FINAL = document.getElementById('the_end')
             CUENTA_FINAL.remove()
@@ -632,21 +622,42 @@ function elPomodoro() {
             })
             clearInterval(ON)
             clearInterval(OFF)
+            CONTAINER2.removeAttribute('class')
+            if (INTERVALO_T !== 1000) {
+                document.getElementById('interval_t').value = 1000
+            }
+            deleteIcons()
         })
 
-        console.log('inicio cronometro', CRONOMETRO_ON.cronometro_on)
         TEMPORIZADOR.push(`${HORAS_T.toString().padStart(2, '0')}:${MINUTOS_T.toString().padStart(2, '0')}:${SEGUNDOS_T.toString().padStart(2, '0')}`)
         arrastre = false
 
-        const ULTIMO_OBJETO_TEMPORIZADOR_INDICE = document.querySelectorAll('.tareas')[1].children[document.querySelectorAll('.tareas')[1].children.length - 1].children[0].innerHTML
-        const ULTIMO_OBJETO_TEMPORIZADOR_TASK = document.querySelectorAll('.tareas')[1].children[document.querySelectorAll('.tareas')[1].children.length - 1].children[1].innerHTML
-        const L = document.createElement('label')
-        L.innerHTML = `${ULTIMO_OBJETO_TEMPORIZADOR_INDICE} - ${ULTIMO_OBJETO_TEMPORIZADOR_TASK} - TEMPORIZADOR: ${HORAS_T.toString().padStart(2, '0')}:${MINUTOS_T.toString().padStart(2, '0')}:${SEGUNDOS_T.toString().padStart(2, '0')}`
-        STADISTICS.push(`${ULTIMO_OBJETO_TEMPORIZADOR_INDICE} - ${ULTIMO_OBJETO_TEMPORIZADOR_TASK} - TEMPORIZADOR: ${HORAS_T.toString().padStart(2, '0')}:${MINUTOS_T.toString().padStart(2, '0')}:${SEGUNDOS_T.toString().padStart(2, '0')}`)
-        document.getElementsByClassName('stadistic')[0].appendChild(L)
-        console.log(STADISTICS)
-        localStorage.setItem('TEMPORIZADOR', TEMPORIZADOR)
+        statisticsRec()
     }
+}
+
+function statisticsRec() {
+    const L = document.createElement('label')
+
+    if (document.querySelectorAll('.tareas')[1].children[document.querySelectorAll('.tareas')[1].children.length - 1].children[0]) {
+        ULTIMO_OBJETO_TEMPORIZADOR_INDICE = document.querySelectorAll('.tareas')[1].children[document.querySelectorAll('.tareas')[1].children.length - 1].children[0].innerHTML
+    }
+
+    if (document.querySelectorAll('.tareas')[1].children[document.querySelectorAll('.tareas')[1].children.length - 1].children[0]) {
+        ULTIMO_OBJETO_TEMPORIZADOR_TASK = document.querySelectorAll('.tareas')[1].children[document.querySelectorAll('.tareas')[1].children.length - 1].children[1].innerHTML
+    }
+
+    if (ULTIMO_OBJETO_TEMPORIZADOR_INDICE !== undefined && ULTIMO_OBJETO_TEMPORIZADOR_TASK !== undefined) {
+        L.innerHTML = `${ULTIMO_OBJETO_TEMPORIZADOR_INDICE} - ${ULTIMO_OBJETO_TEMPORIZADOR_TASK} - TEMPORIZADOR: ${HORAS_T.toString().padStart(2, '0')}:${MINUTOS_T.toString().padStart(2, '0')}:${SEGUNDOS_T.toString().padStart(2, '0')}`
+        STATISTICS.push(`${ULTIMO_OBJETO_TEMPORIZADOR_INDICE} - ${ULTIMO_OBJETO_TEMPORIZADOR_TASK} - TEMPORIZADOR: ${HORAS_T.toString().padStart(2, '0')}:${MINUTOS_T.toString().padStart(2, '0')}:${SEGUNDOS_T.toString().padStart(2, '0')}`)
+        document.getElementsByClassName('stadistic')[0].appendChild(L)
+    } else {
+        document.getElementById('hs_t')
+        L.innerHTML = `TEMPORIZADOR: ${document.getElementById('hs_t').value.toString().padStart(2, '0')}:${document.getElementById('min_t').value.toString().padStart(2, '0')}:${document.getElementById('seg_t').value.toString().padStart(2, '0')}`
+        STATISTICS.push(`TEMPORIZADOR: ${document.getElementById('hs_t').value.toString().padStart(2, '0')}:${document.getElementById('min_t').value.toString().padStart(2, '0')}:${document.getElementById('seg_t').value.toString().padStart(2, '0')}`)
+        document.getElementsByClassName('stadistic')[0].appendChild(L)
+    }
+    localStorage.setItem('TEMPORIZADOR', TEMPORIZADOR)
 }
 
 function desactivarCronometro() {
@@ -672,3 +683,56 @@ function activarTemporizador() {
     BTN_STOP_T.hidden = false
     BTN_RESTART_T.hidden = false
 }
+
+function inicioPomodoro() {
+    BTN_START_T.disabled = true
+    BTN_STOP_T.disabled = false
+}
+
+function pausaPomodoro() {
+    BTN_START_T.disabled = false
+    BTN_STOP_T.disabled = true
+}
+
+function showTimeAndDate() {
+    setInterval(() => {
+        let day = new Date().toLocaleString('es-AR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: false })
+        let day_toUpperCase = day.slice(0, 1).toUpperCase()
+        day = day_toUpperCase + day.slice(1)
+        const WORDS = day.split(' ')
+        let ORIGINAL_MONTH = WORDS[3]
+        let MODIFIED_MONTH = ORIGINAL_MONTH.slice(0, 1).toUpperCase() + ORIGINAL_MONTH.slice(1)
+        day = day.replace(ORIGINAL_MONTH, MODIFIED_MONTH)
+        TIME_DATE.textContent = day + 'hs'
+    }, 1000)
+}
+showTimeAndDate()
+
+function startPomodoro(id, duration) {
+    myWorker.worker.postMessage({ action: "start", id, type: "pomodoro", duration, update: "interval_t", INTERVALO_T: INTERVALO_T })
+}
+
+function startStatistics(id) {
+    if (multi_worker == false) {
+        myWorker.worker.postMessage({ action: "start", id, type: "statistic" })
+        multi_worker = true
+    }
+}
+
+function stopPomodoro(id) {
+    myWorker.worker.postMessage({ action: "stop", id, type: "pomodoro" })
+    clearInterval(interval_icons)
+}
+
+BTN_STOP_T.addEventListener('click', () => {
+    pausaPomodoro()
+    stopPomodoro('pomodoro' + worker_id)
+})
+
+function deleteIcons() {
+    document.getElementById('picar').style.display = 'none'
+    document.getElementById('batman').style.display = 'none'
+    document.getElementById('metal').style.display = 'none'
+}
+
+export { TIME_DATE, activarTemporizador, ALARMA, pausaPomodoro }
